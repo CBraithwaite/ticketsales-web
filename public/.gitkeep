@@ -1,0 +1,2 @@
+# Static assets directory — drop favicon.ico, og-images, robots.txt, etc. here.
+# Files in /public are served at the site root (e.g., /favicon.ico).
