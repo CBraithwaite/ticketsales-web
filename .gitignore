@@ -35,3 +35,9 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 .turbo/
+
+# claude code / tooling
+.claude/
+.agents/
+skills-lock.json
+tsconfig.tsbuildinfo
