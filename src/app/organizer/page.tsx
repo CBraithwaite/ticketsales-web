@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle } from 'lucide-react';
+import { Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle, Wallet } from 'lucide-react';
 
 export const metadata = { title: 'Organizer dashboard · TicketSales' };
 
@@ -57,11 +57,18 @@ export default async function OrganizerDashboard() {
           )}
         </div>
         {organizer.verificationStatus === 'Approved' && (
-          <Button asChild>
-            <Link href="/organizer/events/new">
-              <Plus className="h-4 w-4 mr-1" /> Create Event
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/organizer/payouts">
+                <Wallet className="h-4 w-4 mr-1" /> Payouts
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/organizer/events/new">
+                <Plus className="h-4 w-4 mr-1" /> Create Event
+              </Link>
+            </Button>
+          </div>
         )}
       </header>
 

@@ -12,6 +12,9 @@ export interface OrganizerResponse {
   taxRegistrationNumber: string | null;
   verificationStatus: 'Pending' | 'UnderReview' | 'Approved' | 'Rejected' | 'Suspended';
   verifiedAt: string | null;
+  payoutBankName: string | null;
+  payoutBankAccountLast4: string | null;
+  payoutCurrency: string;
 }
 
 export interface TierResponse {
@@ -152,6 +155,82 @@ export interface OrderSummary {
   buyerName: string;
   event: { id: string; slug: string; name: string; startsAt: string; venueName: string };
   tickets: TicketBrief[];
+}
+
+// ---- Bank Transfer ----------------------------------------------------------
+
+export interface BankTransferReserveResponse {
+  orderNumber: string;
+  confirmationToken: string;
+  expiresAt: string;
+  subtotalAmount: number;
+  feesAmount: number;
+  totalAmount: number;
+  currency: string;
+  bankDetails: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    routingNumber: string | null;
+    branch: string | null;
+  };
+  paymentMemo: string;
+}
+
+// ---- Payouts ----------------------------------------------------------------
+
+export interface PayoutEventSummary {
+  eventId: string;
+  eventName: string;
+  eventDate: string;
+  ticketsSold: number;
+  grossAmount: number;
+  feesAmount: number;
+  netAmount: number;
+  eligibleAmount: number;
+  pendingPayoutAmount: number;
+  paidOutAmount: number;
+  currency: string;
+}
+
+export interface PayoutResponse {
+  id: string;
+  eventId: string | null;
+  eventName: string | null;
+  periodStart: string;
+  periodEnd: string;
+  grossAmount: number;
+  feeAmount: number;
+  netAmount: number;
+  currency: string;
+  status: 'Pending' | 'Processing' | 'Paid' | 'Failed';
+  bankRef: string | null;
+  scheduledAt: string;
+  paidAt: string | null;
+}
+
+export interface AdminPayoutItem {
+  id: string;
+  organizerName: string;
+  eventName: string | null;
+  periodStart: string;
+  periodEnd: string;
+  netAmount: number;
+  currency: string;
+  status: string;
+  scheduledAt: string;
+  bankRef: string | null;
+}
+
+export interface AdminBankTransferOrderItem {
+  orderNumber: string;
+  buyerName: string;
+  buyerEmail: string;
+  eventName: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  expiresAt: string | null;
 }
 
 export interface PromoCodeResponse {
