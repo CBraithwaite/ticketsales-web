@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBaseUrl } from '@/lib/api';
@@ -29,6 +30,8 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('order') ?? '';
   const token = searchParams.get('token') ?? '';
+  const { status } = useSession();
+  const isGuest = status === 'unauthenticated';
 
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -211,6 +214,23 @@ function SuccessContent() {
           <Link href="/">Browse More Events</Link>
         </Button>
       </div>
+
+      {isGuest && (
+        <Card className="mt-6 border-primary/20 bg-primary/5">
+          <CardContent className="p-5 text-center space-y-2">
+            <p className="font-medium text-sm">Save your tickets to your account</p>
+            <p className="text-xs text-muted-foreground">
+              Create a free account with <span className="font-medium">{order.buyerEmail}</span> to manage
+              transfers, request refunds, and access your tickets anytime.
+            </p>
+            <Button asChild size="sm" className="mt-1">
+              <Link href={`/signup?email=${encodeURIComponent(order.buyerEmail)}`}>
+                Create free account
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <p className="mt-6 text-xs text-muted-foreground text-center">
         Bookmark this page or visit My Tickets to access your QR codes anytime.

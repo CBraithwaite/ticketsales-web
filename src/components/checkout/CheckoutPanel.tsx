@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import type { EventDetail, TierResponse } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Ticket, Minus, Plus, Loader2 } from 'lucide-react';
+import { Ticket, Minus, Plus, Loader2, LogIn } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
 import WaitlistButton from './WaitlistButton';
 
@@ -20,12 +23,24 @@ const fmt = (amount: number, currency: string) =>
   `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function CheckoutPanel({ event }: Props) {
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const isAuthed = status === 'authenticated';
+
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-fill buyer details from session when user is signed in.
+  useEffect(() => {
+    if (session?.user) {
+      setBuyerName((prev) => prev || (session.user.fullName ?? session.user.name ?? ''));
+      setBuyerEmail((prev) => prev || (session.user.email ?? ''));
+    }
+  }, [session]);
 
   const now = new Date();
   const eventStarted = new Date(event.startsAt) <= now;
@@ -68,9 +83,14 @@ export default function CheckoutPanel({ event }: Props) {
         .filter(([, qty]) => qty > 0)
         .map(([tierId, quantity]) => ({ tierId, quantity }));
 
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.accessToken) {
+        headers['Authorization'] = `Bearer ${session.accessToken}`;
+      }
+
       const reserveRes = await fetch(`${getApiBaseUrl()}/api/v1/checkout/reserve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           eventId: event.id,
           lines,
@@ -203,7 +223,18 @@ export default function CheckoutPanel({ event }: Props) {
               </div>
 
               <div className="space-y-3 border-t pt-4">
-                <p className="text-sm font-medium">Your details</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Your details</p>
+                  {!isAuthed && (
+                    <Link
+                      href={`/login?next=${encodeURIComponent(pathname)}`}
+                      className="flex items-center gap-1 text-xs text-primary hover:underline"
+                    >
+                      <LogIn className="h-3 w-3" />
+                      Sign in to autofill
+                    </Link>
+                  )}
+                </div>
                 <div>
                   <Label htmlFor="checkout-name" className="text-xs">Full name *</Label>
                   <Input

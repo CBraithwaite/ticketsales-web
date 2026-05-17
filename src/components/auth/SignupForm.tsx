@@ -42,7 +42,7 @@ async function extractError(res: Response): Promise<string> {
   }
 }
 
-export default function SignupForm() {
+export default function SignupForm({ defaultEmail = '' }: { defaultEmail?: string }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -51,7 +51,7 @@ export default function SignupForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Form>({ resolver: zodResolver(Schema) });
+  } = useForm<Form>({ resolver: zodResolver(Schema), defaultValues: { email: defaultEmail } });
 
   const onSubmit = (data: Form) =>
     startTransition(async () => {

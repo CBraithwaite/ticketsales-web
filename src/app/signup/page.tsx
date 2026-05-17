@@ -5,6 +5,10 @@ import { Ticket, CheckCircle2 } from 'lucide-react';
 
 export const metadata = { title: 'Create account · TicketSales' };
 
+interface Props {
+  searchParams: { email?: string };
+}
+
 const PERKS = [
   'Browse and book events instantly',
   'QR tickets on your phone — no printing needed',
@@ -12,7 +16,8 @@ const PERKS = [
   'Become a verified event organizer',
 ];
 
-export default function SignupPage() {
+export default function SignupPage({ searchParams }: Props) {
+  const defaultEmail = searchParams.email ?? '';
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
 
@@ -79,7 +84,7 @@ export default function SignupPage() {
               <CardDescription>Free to join — takes less than a minute</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
-              <SignupForm />
+              <SignupForm defaultEmail={defaultEmail} />
             </CardContent>
           </Card>
 
