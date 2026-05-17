@@ -1,11 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { XCircle } from 'lucide-react';
 
-export default function CheckoutCancelledPage() {
+function CancelledContent() {
   const searchParams = useSearchParams();
   const order = searchParams.get('order');
 
@@ -30,5 +31,13 @@ export default function CheckoutCancelledPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutCancelledPage() {
+  return (
+    <Suspense>
+      <CancelledContent />
+    </Suspense>
   );
 }

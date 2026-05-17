@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBaseUrl } from '@/lib/api';
@@ -25,7 +25,7 @@ const fmtDate = (iso: string) =>
     minute: '2-digit',
   });
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('order') ?? '';
   const token = searchParams.get('token') ?? '';
@@ -216,5 +216,13 @@ export default function CheckoutSuccessPage() {
         Bookmark this page or visit My Tickets to access your QR codes anytime.
       </p>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense>
+      <SuccessContent />
+    </Suspense>
   );
 }
