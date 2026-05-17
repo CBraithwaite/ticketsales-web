@@ -79,14 +79,14 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <Card className="border-0 shadow-none">
-            <CardHeader className="px-0 pb-5">
+          <Card>
+            <CardHeader className="pb-5">
               <CardTitle className="font-display text-2xl font-bold tracking-tight">
                 Welcome back
               </CardTitle>
               <CardDescription>Sign in to access your tickets and account</CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent>
               <Suspense>
                 <LoginForm />
               </Suspense>

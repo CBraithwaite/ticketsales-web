@@ -76,14 +76,14 @@ export default function SignupPage({ searchParams }: Props) {
             </Link>
           </div>
 
-          <Card className="border-0 shadow-none">
-            <CardHeader className="px-0 pb-5">
+          <Card>
+            <CardHeader className="pb-5">
               <CardTitle className="font-display text-2xl font-bold tracking-tight">
                 Create your account
               </CardTitle>
               <CardDescription>Free to join — takes less than a minute</CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent>
               <SignupForm defaultEmail={defaultEmail} />
             </CardContent>
           </Card>
