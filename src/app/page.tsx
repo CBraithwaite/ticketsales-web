@@ -4,8 +4,7 @@ import { getApiBaseUrl } from '@/lib/api';
 import type { EventListItem } from '@/types/api';
 import EventCard from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays, MapPin, Music, Sparkles, ArrowRight } from 'lucide-react';
+import { CalendarDays, ArrowRight, Music2, Mic2, PartyPopper, Star, Users2, Zap } from 'lucide-react';
 
 async function fetchPublicEvents(): Promise<{ events: EventListItem[]; error: string | null }> {
   try {
@@ -17,6 +16,16 @@ async function fetchPublicEvents(): Promise<{ events: EventListItem[]; error: st
   }
 }
 
+const CATEGORIES = [
+  { label: 'Dancehall', icon: Music2, href: '/?category=Dancehall' },
+  { label: 'Reggae', icon: Music2, href: '/?category=Reggae' },
+  { label: 'Stage Show', icon: Mic2, href: '/?category=StageShow' },
+  { label: 'Festival', icon: Star, href: '/?category=Festival' },
+  { label: 'Party', icon: PartyPopper, href: '/?category=Party' },
+  { label: 'Comedy', icon: Users2, href: '/?category=Comedy' },
+  { label: 'Concert', icon: Zap, href: '/?category=Concert' },
+];
+
 export default async function Home() {
   const session = await auth();
   const isAuthed = !!session?.user;
@@ -24,108 +33,184 @@ export default async function Home() {
 
   return (
     <>
-      {/* Hero Section */}
+      {/* ── Hero ── */}
       <section className="relative overflow-hidden gradient-hero text-white">
-        <div className="absolute inset-0 opacity-5" />
-        {/* Decorative shapes */}
-        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+        <div className="absolute inset-0 bg-dot-grid" />
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-accent/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-20 h-[400px] w-[400px] rounded-full bg-primary/30 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
           <div className="max-w-2xl animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span>Jamaica&apos;s #1 Event Platform</span>
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-subtle" />
+              Jamaica&apos;s #1 Event Platform
             </div>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              Discover Amazing Events{' '}
-              <span className="text-accent">Across Jamaica</span>
-            </h1>
-            <p className="mt-4 text-lg text-white/80 sm:text-xl">
-              From Kingston dancehall parties to Montego Bay beach festivals — find, book, and experience the best events on the island.
-            </p>
-          </div>
 
-          {/* Stats pills */}
-          <div className="mt-10 flex flex-wrap gap-4 animate-fade-in-up-delay">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm backdrop-blur-sm">
-              <Music className="h-4 w-4 text-accent" />
-              <span className="font-semibold">{events.length}</span> Events
+            {/* Headline */}
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
+              Discover{' '}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: 'linear-gradient(90deg, hsl(44 96% 60%) 0%, hsl(44 96% 80%) 100%)',
+                }}
+              >
+                Amazing Events
+              </span>
+              <br />Across Jamaica
+            </h1>
+
+            <p className="mt-4 text-base text-white/70 sm:text-lg max-w-xl leading-relaxed">
+              From Kingston dancehall parties to Montego Bay beach festivals — find, book,
+              and experience the best events on the island.
+            </p>
+
+            {/* CTA buttons */}
+            <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up-delay">
+              <Button
+                size="lg"
+                className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg shadow-accent/20 border-0"
+                asChild
+              >
+                <Link href="/#events">
+                  Browse Events <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              {!isAuthed && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 font-semibold backdrop-blur-sm"
+                  asChild
+                >
+                  <Link href="/signup">Sell Your Tickets</Link>
+                </Button>
+              )}
             </div>
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm backdrop-blur-sm">
-              <MapPin className="h-4 w-4 text-accent" />
-              <span>14 Parishes</span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm backdrop-blur-sm">
-              <CalendarDays className="h-4 w-4 text-accent" />
-              <span>Every weekend</span>
+
+            {/* Trust stats */}
+            <div className="mt-10 flex flex-wrap gap-5 animate-fade-in-up-delay-2">
+              {[
+                { value: `${events.length}+`, label: 'Live Events' },
+                { value: '14', label: 'Parishes' },
+                { value: '2s', label: 'Gate scan time' },
+              ].map((stat) => (
+                <div key={stat.label} className="flex flex-col">
+                  <span className="font-display text-2xl font-bold text-white">{stat.value}</span>
+                  <span className="text-xs text-white/50 font-medium">{stat.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Events Section */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Upcoming Events</h2>
-            <p className="mt-1 text-muted-foreground">Don&apos;t miss out on what&apos;s happening</p>
+      {/* ── Category strip ── */}
+      <section className="border-b bg-background">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.label}
+                href={cat.href}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              >
+                <cat.icon className="h-3.5 w-3.5" />
+                {cat.label}
+              </Link>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Events grid ── */}
+      <section id="events" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">
+              What&apos;s On
+            </p>
+            <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              Upcoming Events
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground hidden sm:block">
+            {events.length} event{events.length !== 1 ? 's' : ''} available
+          </p>
         </div>
 
         {events.length > 0 ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((e, i) => (
-              <div key={e.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div
+                key={e.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${i * 0.06}s` }}
+              >
                 <EventCard event={e} />
               </div>
             ))}
           </div>
         ) : (
-          <Card className="mt-8 border-dashed">
-            <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <CalendarDays className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold">No upcoming events yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {eventsError
-                    ? `Could not load events: ${eventsError}`
-                    : 'Check back soon for exciting events across Jamaica!'
-                  }
-                </p>
-              </div>
-              {isAuthed && (
-                <Button asChild>
-                  <Link href="/organizer">
-                    Create an event <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed py-20 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/8">
+              <CalendarDays className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <p className="font-display text-lg font-semibold">No upcoming events yet</p>
+              <p className="mt-1 text-sm text-muted-foreground max-w-xs mx-auto">
+                {eventsError
+                  ? `Could not load events: ${eventsError}`
+                  : 'Check back soon for exciting events across Jamaica!'}
+              </p>
+            </div>
+            {isAuthed && (
+              <Button asChild className="rounded-full mt-1">
+                <Link href="/organizer">
+                  Create an event <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
         )}
       </section>
 
-      {/* CTA Section */}
+      {/* ── Organizer CTA ── */}
       {!isAuthed && (
         <section className="border-t bg-muted/30">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <div className="flex flex-col items-center gap-6 text-center">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Ready to host your own event?
-              </h2>
-              <p className="max-w-lg text-muted-foreground">
-                Join TicketSales as an organizer and reach thousands of event-goers across Jamaica.
-              </p>
-              <div className="flex gap-3">
-                <Button size="lg" asChild>
-                  <Link href="/signup">Get Started Free <ArrowRight className="h-4 w-4 ml-1" /></Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="/login">Sign in</Link>
-                </Button>
+            <div className="relative overflow-hidden rounded-2xl gradient-hero p-8 sm:p-12 text-white text-center">
+              <div className="absolute inset-0 bg-dot-grid opacity-50" />
+              <div className="relative">
+                <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-2">
+                  For Organizers
+                </p>
+                <h2 className="font-display text-2xl font-bold sm:text-3xl">
+                  Ready to host your own event?
+                </h2>
+                <p className="mt-3 text-white/70 max-w-md mx-auto text-sm sm:text-base">
+                  Join TicketSales and reach thousands of event-goers across Jamaica.
+                  Set up, sell, and scan — all in one place.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3 justify-center">
+                  <Button
+                    size="lg"
+                    className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold border-0"
+                    asChild
+                  >
+                    <Link href="/signup">Get Started Free</Link>
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20"
+                    asChild
+                  >
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

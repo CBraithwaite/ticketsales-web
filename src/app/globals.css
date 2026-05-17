@@ -17,26 +17,33 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 98.8%;
-    --foreground: 0 0% 9%;
+    --background: 0 0% 98.5%;
+    --foreground: 220 15% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 220 15% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 147 100% 30%;
+    --popover-foreground: 220 15% 9%;
+    --primary: 148 85% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 147 10% 95%;
-    --secondary-foreground: 147 40% 20%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 50 90% 55%;
-    --accent-foreground: 50 50% 15%;
-    --destructive: 0 84% 60%;
+    --secondary: 148 30% 94%;
+    --secondary-foreground: 148 50% 20%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 8% 44%;
+    --accent: 44 96% 52%;
+    --accent-foreground: 44 60% 12%;
+    --destructive: 0 84% 58%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 89%;
-    --input: 0 0% 89%;
-    --ring: 147 100% 30%;
-    --radius: 0.75rem;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 148 85% 28%;
+    --radius: 0.625rem;
+
+    /* Elevation shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
   }
 
   * {
@@ -47,62 +54,96 @@ body {
     @apply bg-background text-foreground antialiased;
   }
 
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 }
 
+@layer components {
+  /* Refined card shadow on hover */
+  .card-hover {
+    @apply transition-all duration-200;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-lg);
+    @apply -translate-y-0.5;
+  }
+}
+
 @layer utilities {
   .gradient-brand {
-    @apply bg-gradient-to-br from-primary via-primary/90 to-emerald-800;
+    background: linear-gradient(135deg, hsl(148 85% 28%) 0%, hsl(155 75% 22%) 100%);
   }
   .gradient-hero {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(150 80% 20%) 50%, hsl(160 60% 15%) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(148 85% 20%) 0%,
+      hsl(152 70% 16%) 45%,
+      hsl(160 55% 13%) 100%
+    );
+  }
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(44 96% 52%) 0%, hsl(38 95% 50%) 100%);
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-600;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(148 85% 30%) 0%, hsl(155 70% 38%) 100%);
+  }
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(44 96% 50%) 0%, hsl(38 95% 46%) 100%);
+  }
+  /* Subtle dot-grid background pattern for hero sections */
+  .bg-dot-grid {
+    background-image: radial-gradient(circle, rgb(255 255 255 / 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  /* Inset card — used inside darker surfaces */
+  .surface-inset {
+    background: rgb(255 255 255 / 0.06);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(8px);
   }
 }
 
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.8; }
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.5s ease-out forwards;
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in-up-delay {
-  animation: fade-in-up 0.5s ease-out 0.15s forwards;
-  opacity: 0;
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
 .animate-fade-in-up-delay-2 {
-  animation: fade-in-up 0.5s ease-out 0.3s forwards;
-  opacity: 0;
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
 }
 
 .animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
+  animation: pulse-subtle 2.5s ease-in-out infinite;
 }

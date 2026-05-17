@@ -8,11 +8,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         brand: {
-          DEFAULT: '#009B3A',
-          gold: '#FED100',
-          ink: '#0A0A0A',
+          DEFAULT: '#007A2E',
+          gold: '#F5C400',
+          ink: '#0A0F0A',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -52,6 +56,13 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
       },
     },
   },

@@ -130,6 +130,30 @@ export const CATEGORY_LABELS: Record<typeof CATEGORIES[number], string> = {
   Other: 'Other',
 };
 
+export interface TicketBrief {
+  id: string;
+  status: string;
+  tierId: string;
+  tierName: string;
+  holderName: string;
+  qrPayload: string;
+}
+
+export interface OrderSummary {
+  orderNumber: string;
+  status: 'Pending' | 'Paid' | 'Failed' | 'Refunded' | 'PartiallyRefunded' | 'Cancelled' | 'Expired';
+  subtotalAmount: number;
+  feesAmount: number;
+  totalAmount: number;
+  currency: string;
+  expiresAt: string | null;
+  paidAt: string | null;
+  buyerEmail: string;
+  buyerName: string;
+  event: { id: string; slug: string; name: string; startsAt: string; venueName: string };
+  tickets: TicketBrief[];
+}
+
 export interface PromoCodeResponse {
   id: string;
   code: string;

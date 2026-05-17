@@ -6,7 +6,8 @@ import { CATEGORY_LABELS, PARISH_LABELS } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Shirt, ArrowLeft, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Shirt, ArrowLeft } from 'lucide-react';
+import CheckoutPanel from '@/components/checkout/CheckoutPanel';
 
 interface Props {
   params: { slug: string };
@@ -140,43 +141,9 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Right: Tickets sidebar */}
+          {/* Right: Checkout sidebar */}
           <div>
-            <Card className="sticky top-20">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2">
-                  <Ticket className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Tickets</h2>
-                </div>
-                <ul className="mt-4 space-y-3">
-                  {ev.tiers.map((t) => {
-                    const tierSoldOut = t.inventoryAvailable <= 0;
-                    return (
-                      <li key={t.id} className="rounded-lg border-l-4 border-l-primary bg-muted/50 p-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-sm">{t.name}</p>
-                            {t.description && <p className="text-xs text-muted-foreground mt-0.5">{t.description}</p>}
-                          </div>
-                          <p className="text-sm font-bold whitespace-nowrap">{fmtMoney(t.priceAmount, t.currency)}</p>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            {tierSoldOut ? 'Sold out' : `${t.inventoryAvailable} left`}
-                          </span>
-                          <Button size="xs" disabled title="Coming soon" variant={tierSoldOut ? 'outline' : 'default'}>
-                            {tierSoldOut ? 'Sold out' : 'Select'}
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="mt-4 text-center text-xs text-muted-foreground">
-                  Checkout coming soon
-                </p>
-              </CardContent>
-            </Card>
+            <CheckoutPanel event={ev} />
           </div>
         </div>
       </div>

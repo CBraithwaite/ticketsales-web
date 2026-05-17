@@ -102,8 +102,11 @@ export default async function MePage() {
       )}
 
       <div className="mt-6 flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href="/me/tickets">My Tickets</Link>
+        </Button>
         {isOrganizer ? (
-          <Button asChild>
+          <Button asChild variant="outline">
             <Link href="/organizer">Organizer Dashboard</Link>
           </Button>
         ) : (
