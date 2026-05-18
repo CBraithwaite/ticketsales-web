@@ -9,13 +9,20 @@ import { getApiBaseUrl } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Mail, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 
 const Schema = z.object({
   email: z.string().email('Enter a valid email address'),
 });
-type Form = z.infer<typeof Schema>;
+type FormValues = z.infer<typeof Schema>;
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -23,11 +30,9 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Form>({
-    resolver: zodResolver(Schema),
-  });
+  const form = useForm<FormValues>({ resolver: zodResolver(Schema) });
 
-  const onSubmit = async (data: Form) => {
+  const onSubmit = async (data: FormValues) => {
     setLoading(true);
     setError(null);
     try {
@@ -92,40 +97,48 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      autoFocus
-                      className="pl-9"
-                      placeholder="jane@example.com"
-                      {...register('email')}
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
-                  )}
-                </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-                {error && (
-                  <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email address</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                            <Input
+                              type="email"
+                              autoComplete="email"
+                              autoFocus
+                              className="pl-9"
+                              placeholder="jane@example.com"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
-                  ) : (
-                    'Send reset link'
+                  {error && (
+                    <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive">
+                      {error}
+                    </div>
                   )}
-                </Button>
-              </form>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+                    ) : (
+                      'Send reset link'
+                    )}
+                  </Button>
+                </form>
+              </Form>
             )}
           </CardContent>
         </Card>

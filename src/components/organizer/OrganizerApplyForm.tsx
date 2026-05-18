@@ -7,9 +7,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getApiBaseUrl } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 
 const Schema = z.object({
   businessName: z.string().min(2, 'Business name is required').max(200),
@@ -20,7 +28,7 @@ const Schema = z.object({
     .regex(/^\+\d{8,19}$/, 'Use E.164 format, e.g. +18761234567'),
   taxRegistrationNumber: z.string().max(20).or(z.literal('')).optional(),
 });
-type Form = z.infer<typeof Schema>;
+type FormValues = z.infer<typeof Schema>;
 
 async function extractError(res: Response): Promise<string> {
   if (res.status === 409) return 'You already have an organizer profile.';
@@ -44,11 +52,7 @@ export default function OrganizerApplyForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<Form>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
       contactName: session?.user?.fullName ?? '',
@@ -56,7 +60,7 @@ export default function OrganizerApplyForm() {
     },
   });
 
-  const onSubmit = (data: Form) =>
+  const onSubmit = (data: FormValues) =>
     start(async () => {
       setServerError(null);
       const res = await fetch(`${getApiBaseUrl()}/api/v1/organizers/apply`, {
@@ -79,59 +83,99 @@ export default function OrganizerApplyForm() {
         return;
       }
 
-      // Refresh the session so the new Organizer role is reflected.
       await update();
       router.push('/organizer');
       router.refresh();
     });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <Field id="businessName" label="Business name" reg={register('businessName')} err={errors.businessName?.message} />
-      <Field id="contactName" label="Contact name" reg={register('contactName')} err={errors.contactName?.message} />
-      <Field id="contactEmail" label="Contact email" type="email" reg={register('contactEmail')} err={errors.contactEmail?.message} />
-      <Field id="contactPhone" label="Contact phone" placeholder="+18761234567" reg={register('contactPhone')} err={errors.contactPhone?.message} />
-      <Field
-        id="taxRegistrationNumber"
-        label="TRN"
-        hint="Taxpayer Registration Number (optional)"
-        reg={register('taxRegistrationNumber')}
-        err={errors.taxRegistrationNumber?.message}
-      />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-      {serverError && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-800">
-          {serverError}
-        </div>
-      )}
+        <FormField
+          control={form.control}
+          name="businessName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Business name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <Button type="submit" disabled={pending} className="w-full">
-        {pending ? 'Submitting…' : 'Apply to be an organizer'}
-      </Button>
-      <p className="text-xs text-neutral-500">
-        For the MVP, applications are auto-approved. The admin review flow lands later.
-      </p>
-    </form>
-  );
-}
+        <FormField
+          control={form.control}
+          name="contactName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contact name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-function Field({
-  id, label, type = 'text', placeholder, hint, reg, err,
-}: {
-  id: string;
-  label: string;
-  type?: string;
-  placeholder?: string;
-  hint?: string;
-  reg: ReturnType<ReturnType<typeof useForm<Form>>['register']>;
-  err?: string;
-}) {
-  return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} placeholder={placeholder} {...reg} className="mt-1" />
-      {hint && !err && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
-    </div>
+        <FormField
+          control={form.control}
+          name="contactEmail"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contact email</FormLabel>
+              <FormControl>
+                <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="contactPhone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contact phone</FormLabel>
+              <FormControl>
+                <Input placeholder="+18761234567" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="taxRegistrationNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>TRN</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormDescription>Taxpayer Registration Number (optional)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {serverError && (
+          <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive">
+            {serverError}
+          </div>
+        )}
+
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? 'Submitting…' : 'Apply to be an organizer'}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          For the MVP, applications are auto-approved. The admin review flow lands later.
+        </p>
+      </form>
+    </Form>
   );
 }

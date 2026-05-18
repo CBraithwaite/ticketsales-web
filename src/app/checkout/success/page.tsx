@@ -36,6 +36,7 @@ function SuccessContent() {
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
+  const [timedOut, setTimedOut] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     if (!orderNumber || !token) {
@@ -65,7 +66,10 @@ function SuccessContent() {
   // Poll until Paid (Stripe webhook may lag by a few seconds)
   useEffect(() => {
     if (order?.status === 'Paid') return;
-    if (pollCount >= 15) return; // give up after ~30s
+    if (pollCount >= 15) {
+      setTimedOut(true);
+      return;
+    }
 
     const t = setTimeout(() => {
       setPollCount((c) => c + 1);
@@ -95,6 +99,27 @@ function SuccessContent() {
   }
 
   if (order.status === 'Pending') {
+    if (timedOut) {
+      return (
+        <div className="mx-auto max-w-lg px-4 py-16 flex flex-col items-center gap-4 text-center">
+          <CheckCircle2 className="h-10 w-10 text-green-500" />
+          <h2 className="text-xl font-semibold">Payment received!</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Your payment was processed but ticket confirmation is taking longer than usual.
+            Check your email for a confirmation, or visit <strong>My Tickets</strong> in a minute.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center mt-2">
+            <Button onClick={() => { setTimedOut(false); setPollCount(0); fetchOrder(); }}>
+              Try again
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/me/tickets">My Tickets</Link>
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-lg px-4 py-16 flex flex-col items-center gap-4 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

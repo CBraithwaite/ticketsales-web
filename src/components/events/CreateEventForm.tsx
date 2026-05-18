@@ -11,9 +11,24 @@ import {
   CATEGORIES, CATEGORY_LABELS, PARISHES, PARISH_LABELS,
 } from '@/types/api';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const Schema = z
   .object({
@@ -45,7 +60,7 @@ const Schema = z
     path: ['maxPerOrder'],
   });
 
-type Form = z.infer<typeof Schema>;
+type FormValues = z.infer<typeof Schema>;
 
 async function extractError(res: Response): Promise<string> {
   try {
@@ -68,11 +83,7 @@ export default function CreateEventForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<Form>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
       category: 'Concert',
@@ -85,7 +96,7 @@ export default function CreateEventForm() {
     },
   });
 
-  const onSubmit = (data: Form) =>
+  const onSubmit = (data: FormValues) =>
     start(async () => {
       setServerError(null);
 
@@ -94,7 +105,6 @@ export default function CreateEventForm() {
         Authorization: `Bearer ${session?.accessToken}`,
       };
 
-      // 1. Create the event (always created as Draft).
       const createRes = await fetch(`${getApiBaseUrl()}/api/v1/events`, {
         method: 'POST',
         headers,
@@ -128,7 +138,6 @@ export default function CreateEventForm() {
 
       const created = (await createRes.json()) as { id: string; slug: string };
 
-      // 2. Optionally publish.
       if (data.publishImmediately) {
         const pubRes = await fetch(`${getApiBaseUrl()}/api/v1/events/${created.id}/publish`, {
           method: 'POST',
@@ -145,151 +154,315 @@ export default function CreateEventForm() {
     });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Event details
-        </legend>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-        <Field id="name" label="Event name" reg={register('name')} err={errors.name?.message} />
+        {/* Event details */}
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Event details
+          </legend>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Select
-            id="category"
-            label="Category"
-            options={CATEGORIES.map((v) => [v, CATEGORY_LABELS[v]])}
-            reg={register('category')}
-            err={errors.category?.message}
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event name</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <Select
-            id="parish"
-            label="Parish"
-            options={PARISHES.map((v) => [v, PARISH_LABELS[v]])}
-            reg={register('parish')}
-            err={errors.parish?.message}
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CATEGORIES.map((v) => (
+                        <SelectItem key={v} value={v}>{CATEGORY_LABELS[v]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="parish"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parish</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {PARISHES.map((v) => (
+                        <SelectItem key={v} value={v}>{PARISH_LABELS[v]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl><Textarea rows={5} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <Label htmlFor="description">Description</Label>
-          <Textarea id="description" rows={5} {...register('description')} className="mt-1" />
-          {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>}
-        </div>
-
-        <Field id="coverImageUrl" label="Cover image URL" placeholder="https://…" reg={register('coverImageUrl')} err={errors.coverImageUrl?.message} />
-      </fieldset>
-
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Venue & schedule
-        </legend>
-        <Field id="venueName" label="Venue name" reg={register('venueName')} err={errors.venueName?.message} />
-        <Field id="venueAddress" label="Venue address" reg={register('venueAddress')} err={errors.venueAddress?.message} />
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field id="startsAt" type="datetime-local" label="Starts at" reg={register('startsAt')} err={errors.startsAt?.message} />
-          <Field id="endsAt" type="datetime-local" label="Ends at" reg={register('endsAt')} err={errors.endsAt?.message} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field id="ageRestriction" label="Age restriction" placeholder="21+" reg={register('ageRestriction')} err={errors.ageRestriction?.message} />
-          <Field id="dressCode" label="Dress code" placeholder="Smart casual" reg={register('dressCode')} err={errors.dressCode?.message} />
-        </div>
-      </fieldset>
-
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-          Ticket tier
-        </legend>
-        <p className="text-xs text-neutral-500">
-          MVP creates a single tier per event. Multi-tier comes in a follow-up.
-        </p>
-
-        <Field id="tierName" label="Tier name" reg={register('tierName')} err={errors.tierName?.message} />
-
-        <div className="grid grid-cols-3 gap-3">
-          <Field id="priceAmount" type="number" step="0.01" label="Price" reg={register('priceAmount')} err={errors.priceAmount?.message} />
-          <Select
-            id="currency"
-            label="Currency"
-            options={[['JMD', 'JMD'], ['USD', 'USD']]}
-            reg={register('currency')}
-            err={errors.currency?.message}
+          <FormField
+            control={form.control}
+            name="coverImageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cover image URL</FormLabel>
+                <FormControl><Input placeholder="https://…" {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <Field id="inventoryTotal" type="number" label="Inventory" reg={register('inventoryTotal')} err={errors.inventoryTotal?.message} />
-        </div>
+        </fieldset>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field id="minPerOrder" type="number" label="Min per order" reg={register('minPerOrder')} err={errors.minPerOrder?.message} />
-          <Field id="maxPerOrder" type="number" label="Max per order" reg={register('maxPerOrder')} err={errors.maxPerOrder?.message} />
-        </div>
-      </fieldset>
+        {/* Venue & schedule */}
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Venue &amp; schedule
+          </legend>
 
-      <label className="flex items-start gap-3 rounded-lg border border-input bg-muted/50 p-3">
-        <input type="checkbox" className="mt-1 h-4 w-4 rounded border-input" {...register('publishImmediately')} />
-        <span className="text-sm">
-          <span className="font-semibold">Publish immediately</span>
-          <span className="block text-xs text-muted-foreground">
-            Otherwise it stays as a draft and you can publish later from your dashboard.
-          </span>
-        </span>
-      </label>
+          <FormField
+            control={form.control}
+            name="venueName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Venue name</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      {serverError && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-800">
-          {serverError}
-        </div>
-      )}
+          <FormField
+            control={form.control}
+            name="venueAddress"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Venue address</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <Button type="submit" disabled={pending} className="w-full">
-        {pending ? 'Saving…' : 'Create event'}
-      </Button>
-    </form>
-  );
-}
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="startsAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Starts at</FormLabel>
+                  <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-function Field({
-  id, label, type = 'text', placeholder, step, reg, err,
-}: {
-  id: string;
-  label: string;
-  type?: string;
-  placeholder?: string;
-  step?: string;
-  reg: ReturnType<ReturnType<typeof useForm<Form>>['register']>;
-  err?: string;
-}) {
-  return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} step={step} placeholder={placeholder} {...reg} className="mt-1" />
-      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
-    </div>
-  );
-}
+            <FormField
+              control={form.control}
+              name="endsAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ends at</FormLabel>
+                  <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-function Select({
-  id, label, options, reg, err,
-}: {
-  id: string;
-  label: string;
-  options: Array<readonly [string, string]>;
-  reg: ReturnType<ReturnType<typeof useForm<Form>>['register']>;
-  err?: string;
-}) {
-  return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
-      <select
-        id={id}
-        {...reg}
-        className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      >
-        {options.map(([v, l]) => (
-          <option key={v} value={v}>{l}</option>
-        ))}
-      </select>
-      {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
-    </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="ageRestriction"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Age restriction</FormLabel>
+                  <FormControl><Input placeholder="21+" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dressCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dress code</FormLabel>
+                  <FormControl><Input placeholder="Smart casual" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </fieldset>
+
+        {/* Ticket tier */}
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Ticket tier
+          </legend>
+          <p className="text-xs text-muted-foreground">
+            MVP creates a single tier per event. Multi-tier comes in a follow-up.
+          </p>
+
+          <FormField
+            control={form.control}
+            name="tierName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tier name</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-3 gap-3">
+            <FormField
+              control={form.control}
+              name="priceAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price</FormLabel>
+                  <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="JMD">JMD</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="inventoryTotal"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Inventory</FormLabel>
+                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="minPerOrder"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Min per order</FormLabel>
+                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="maxPerOrder"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Max per order</FormLabel>
+                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </fieldset>
+
+        {/* Publish immediately */}
+        <FormField
+          control={form.control}
+          name="publishImmediately"
+          render={({ field }) => (
+            <FormItem className="flex items-start gap-3 rounded-lg border border-input bg-muted/50 p-3">
+              <FormControl>
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 rounded border-input"
+                  checked={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <div>
+                <FormLabel className="text-sm font-semibold cursor-pointer">
+                  Publish immediately
+                </FormLabel>
+                <FormDescription className="text-xs mt-0.5">
+                  Otherwise it stays as a draft and you can publish later from your dashboard.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {serverError && (
+          <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive">
+            {serverError}
+          </div>
+        )}
+
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? 'Saving…' : 'Create event'}
+        </Button>
+      </form>
+    </Form>
   );
 }

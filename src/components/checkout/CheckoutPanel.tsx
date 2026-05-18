@@ -4,12 +4,23 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import type { EventDetail, TierResponse, BankTransferReserveResponse } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Ticket, Minus, Plus, Loader2, LogIn,
   CreditCard, Building2, Copy, CheckCircle2, Clock,
@@ -29,28 +40,58 @@ const FEE_PERCENT = 10;
 const fmt = (amount: number, currency: string) =>
   `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const BuyerSchema = z.object({
+  buyerName: z.string().min(1, 'Name is required'),
+  buyerEmail: z.string().email('Enter a valid email address'),
+  buyerPhone: z.string().min(1, 'Phone number is required'),
+});
+type BuyerFormValues = z.infer<typeof BuyerSchema>;
+
+const formatPhoneDisplay = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 15);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  if (digits.length <= 10) return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 10)} ${digits.slice(10)}`;
+};
+
+const normalizePhone = (p: string): string => {
+  const digits = p.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  if (digits.length >= 8) return `+${digits}`;
+  return p.trim();
+};
+
 export default function CheckoutPanel({ event }: Props) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isAuthed = status === 'authenticated';
 
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [buyerPhone, setBuyerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bankResult, setBankResult] = useState<BankTransferReserveResponse | null>(null);
   const [bankStep, setBankStep] = useState<BankStep>('form');
   const [copied, setCopied] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
+
+  const form = useForm<BuyerFormValues>({
+    resolver: zodResolver(BuyerSchema),
+    defaultValues: { buyerName: '', buyerEmail: '', buyerPhone: '' },
+  });
 
   useEffect(() => {
     if (session?.user) {
-      setBuyerName((prev) => prev || (session.user.fullName ?? session.user.name ?? ''));
-      setBuyerEmail((prev) => prev || (session.user.email ?? ''));
+      if (!form.getValues('buyerName')) {
+        form.setValue('buyerName', session.user.fullName ?? session.user.name ?? '');
+      }
+      if (!form.getValues('buyerEmail')) {
+        form.setValue('buyerEmail', session.user.email ?? '');
+      }
     }
-  }, [session]);
+  }, [session, form]);
 
   const now = new Date();
   const eventStarted = new Date(event.startsAt) <= now;
@@ -81,25 +122,36 @@ export default function CheckoutPanel({ event }: Props) {
   const fees = Math.round(subtotal * (FEE_PERCENT / 100) * 100) / 100;
   const total = subtotal + fees;
 
+  const extractError = async (res: Response, fallback: string): Promise<string> => {
+    const body = await res.json().catch(() => ({})) as {
+      error?: string;
+      errors?: Record<string, string[]>;
+    };
+    if (body.error) return body.error;
+    if (body.errors) {
+      const first = Object.values(body.errors).flat()[0];
+      if (first) return first;
+    }
+    return fallback;
+  };
+
   const authHeaders = (): Record<string, string> => {
     const h: Record<string, string> = { 'Content-Type': 'application/json' };
     if (session?.accessToken) h['Authorization'] = `Bearer ${session.accessToken}`;
     return h;
   };
 
-  const reservePayload = () => ({
+  const reservePayload = (buyer: BuyerFormValues) => ({
     eventId: event.id,
     lines: Object.entries(quantities)
       .filter(([, qty]) => qty > 0)
       .map(([tierId, quantity]) => ({ tierId, quantity })),
-    buyerName: buyerName.trim(),
-    buyerEmail: buyerEmail.trim().toLowerCase(),
-    buyerPhone: buyerPhone.trim(),
+    buyerName: buyer.buyerName.trim(),
+    buyerEmail: buyer.buyerEmail.trim().toLowerCase(),
+    buyerPhone: normalizePhone(buyer.buyerPhone),
   });
 
-  const handleCardCheckout = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (totalTickets === 0) return;
+  const handleCardCheckout = async (buyer: BuyerFormValues) => {
     setLoading(true);
     setError(null);
 
@@ -107,12 +159,11 @@ export default function CheckoutPanel({ event }: Props) {
       const reserveRes = await fetch(`${getApiBaseUrl()}/api/v1/checkout/reserve`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(reservePayload()),
+        body: JSON.stringify(reservePayload(buyer)),
       });
 
       if (!reserveRes.ok) {
-        const body = await reserveRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Reservation failed (${reserveRes.status})`);
+        throw new Error(await extractError(reserveRes, `Reservation failed (${reserveRes.status})`));
       }
 
       const reservation = await reserveRes.json() as { orderNumber: string; confirmationToken: string };
@@ -127,8 +178,7 @@ export default function CheckoutPanel({ event }: Props) {
       });
 
       if (!sessionRes.ok) {
-        const body = await sessionRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Payment session failed (${sessionRes.status})`);
+        throw new Error(await extractError(sessionRes, `Payment session failed (${sessionRes.status})`));
       }
 
       const { checkoutUrl } = await sessionRes.json() as { checkoutUrl: string };
@@ -139,9 +189,7 @@ export default function CheckoutPanel({ event }: Props) {
     }
   };
 
-  const handleBankTransfer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (totalTickets === 0) return;
+  const handleBankTransfer = async (buyer: BuyerFormValues) => {
     setLoading(true);
     setError(null);
 
@@ -149,15 +197,15 @@ export default function CheckoutPanel({ event }: Props) {
       const res = await fetch(`${getApiBaseUrl()}/api/v1/checkout/bank-transfer`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify(reservePayload()),
+        body: JSON.stringify(reservePayload(buyer)),
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Reservation failed (${res.status})`);
+        throw new Error(await extractError(res, `Reservation failed (${res.status})`));
       }
 
       const data = await res.json() as BankTransferReserveResponse;
+      setSubmittedEmail(buyer.buyerEmail.trim().toLowerCase());
       setBankResult(data);
       setBankStep('instructions');
     } catch (err) {
@@ -165,6 +213,12 @@ export default function CheckoutPanel({ event }: Props) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onSubmit = (buyer: BuyerFormValues) => {
+    if (totalTickets === 0) return;
+    if (paymentMethod === 'card') handleCardCheckout(buyer);
+    else handleBankTransfer(buyer);
   };
 
   const copyMemo = () => {
@@ -175,7 +229,7 @@ export default function CheckoutPanel({ event }: Props) {
     });
   };
 
-  // ---- Bank transfer instructions view ----
+  // Bank transfer instructions view
   if (bankStep === 'instructions' && bankResult) {
     const bd = bankResult.bankDetails;
     return (
@@ -223,193 +277,226 @@ export default function CheckoutPanel({ event }: Props) {
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            Order <span className="font-mono">{bankResult.orderNumber}</span> · Confirmation email sent to {buyerEmail}
+            Order <span className="font-mono">{bankResult.orderNumber}</span> · Confirmation email sent to {submittedEmail}
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const buyerDetailsValid = buyerName.trim() && buyerEmail.trim() && buyerPhone.trim();
-
   return (
     <Card className="sticky top-20">
       <CardContent className="p-5">
-        <form
-          onSubmit={paymentMethod === 'card' ? handleCardCheckout : handleBankTransfer}
-          className="space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Get Tickets</h2>
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Get Tickets</h2>
+            </div>
 
-          {/* Tier list */}
-          <ul className="space-y-3">
-            {event.tiers.map((tier) => {
-              const soldOut = tier.inventoryAvailable <= 0;
-              const onSaleYet = tier.saleStartsAt ? new Date(tier.saleStartsAt) > now : false;
-              const saleEnded = tier.saleEndsAt ? new Date(tier.saleEndsAt) < now : false;
-              const unavailable = soldOut || onSaleYet || saleEnded || eventStarted;
-              const qty = quantities[tier.id] ?? 0;
+            {/* Tier list */}
+            <ul className="space-y-3">
+              {event.tiers.map((tier) => {
+                const soldOut = tier.inventoryAvailable <= 0;
+                const onSaleYet = tier.saleStartsAt ? new Date(tier.saleStartsAt) > now : false;
+                const saleEnded = tier.saleEndsAt ? new Date(tier.saleEndsAt) < now : false;
+                const unavailable = soldOut || onSaleYet || saleEnded || eventStarted;
+                const qty = quantities[tier.id] ?? 0;
 
-              return (
-                <li key={tier.id} className="rounded-lg border p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm">{tier.name}</p>
-                      {tier.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{tier.description}</p>
+                return (
+                  <li key={tier.id} className="rounded-lg border p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm">{tier.name}</p>
+                        {tier.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{tier.description}</p>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold whitespace-nowrap shrink-0">
+                        {fmt(tier.priceAmount, tier.currency)}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {soldOut ? 'Sold out'
+                          : onSaleYet ? 'Not on sale yet'
+                          : saleEnded ? 'Sale ended'
+                          : eventStarted ? 'Event started'
+                          : `${tier.inventoryAvailable} available`}
+                      </span>
+                      {!unavailable && (
+                        <div className="flex items-center gap-1">
+                          <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                            disabled={qty === 0} onClick={() => adjustQty(tier, -1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center text-sm font-medium">{qty}</span>
+                          <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                            disabled={qty >= Math.min(tier.maxPerOrder, tier.inventoryAvailable)}
+                            onClick={() => adjustQty(tier, 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm font-bold whitespace-nowrap shrink-0">
-                      {fmt(tier.priceAmount, tier.currency)}
-                    </p>
+                    {soldOut && !eventStarted && (
+                      <WaitlistButton eventId={event.id} tierId={tier.id} tierName={tier.name} />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {totalTickets > 0 && (
+              <>
+                {/* Price summary */}
+                <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal ({totalTickets} ticket{totalTickets !== 1 ? 's' : ''})</span>
+                    <span>{fmt(subtotal, currency)}</span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {soldOut ? 'Sold out'
-                        : onSaleYet ? 'Not on sale yet'
-                        : saleEnded ? 'Sale ended'
-                        : eventStarted ? 'Event started'
-                        : `${tier.inventoryAvailable} available`}
-                    </span>
-                    {!unavailable && (
-                      <div className="flex items-center gap-1">
-                        <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                          disabled={qty === 0} onClick={() => adjustQty(tier, -1)}>
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm font-medium">{qty}</span>
-                        <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                          disabled={qty >= Math.min(tier.maxPerOrder, tier.inventoryAvailable)}
-                          onClick={() => adjustQty(tier, 1)}>
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Service fee ({FEE_PERCENT}%)</span>
+                    <span>{fmt(fees, currency)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold border-t pt-1.5 mt-1">
+                    <span>Total</span>
+                    <span>{fmt(total, currency)}</span>
+                  </div>
+                </div>
+
+                {/* Payment method toggle */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                      paymentMethod === 'card'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('bank')}
+                    className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                      paymentMethod === 'bank'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Bank Transfer
+                  </button>
+                </div>
+
+                {paymentMethod === 'bank' && (
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+                    Reserve now and pay by bank deposit. Tickets are issued within 1–2 business days after we confirm receipt.
+                  </div>
+                )}
+
+                {/* Buyer details */}
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Your details</p>
+                    {!isAuthed && (
+                      <Link
+                        href={`/login?next=${encodeURIComponent(pathname)}`}
+                        className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <LogIn className="h-3 w-3" />
+                        Sign in to autofill
+                      </Link>
                     )}
                   </div>
-                  {soldOut && !eventStarted && (
-                    <WaitlistButton eventId={event.id} tierId={tier.id} tierName={tier.name} />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
 
-          {totalTickets > 0 && (
-            <>
-              {/* Price summary */}
-              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal ({totalTickets} ticket{totalTickets !== 1 ? 's' : ''})</span>
-                  <span>{fmt(subtotal, currency)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Service fee ({FEE_PERCENT}%)</span>
-                  <span>{fmt(fees, currency)}</span>
-                </div>
-                <div className="flex justify-between font-semibold border-t pt-1.5 mt-1">
-                  <span>Total</span>
-                  <span>{fmt(total, currency)}</span>
-                </div>
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="buyerName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Full name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Jane Smith" className="h-9" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Payment method toggle */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
-                    paymentMethod === 'card'
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-border text-muted-foreground hover:border-foreground/30'
-                  }`}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('bank')}
-                  className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
-                    paymentMethod === 'bank'
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-border text-muted-foreground hover:border-foreground/30'
-                  }`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  Bank Transfer
-                </button>
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="buyerEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Email *</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="jane@example.com" className="h-9" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {paymentMethod === 'bank' && (
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
-                  Reserve now and pay by bank deposit. Tickets are issued within 1–2 business days after we confirm receipt.
+                  <FormField
+                    control={form.control}
+                    name="buyerPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Phone number *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder="876 555 0100"
+                            className="h-9"
+                            {...field}
+                            onChange={(e) => field.onChange(formatPhoneDisplay(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-[11px]">
+                          Jamaican numbers: enter 10 digits. International: include country code digits (e.g. 1876…).
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              )}
 
-              {/* Buyer details */}
-              <div className="space-y-3 border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Your details</p>
-                  {!isAuthed && (
-                    <Link
-                      href={`/login?next=${encodeURIComponent(pathname)}`}
-                      className="flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <LogIn className="h-3 w-3" />
-                      Sign in to autofill
-                    </Link>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="checkout-name" className="text-xs">Full name *</Label>
-                  <Input id="checkout-name" value={buyerName} onChange={(e) => setBuyerName(e.target.value)}
-                    placeholder="Jane Smith" required className="mt-1 h-9" />
-                </div>
-                <div>
-                  <Label htmlFor="checkout-email" className="text-xs">Email *</Label>
-                  <Input id="checkout-email" type="email" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)}
-                    placeholder="jane@example.com" required className="mt-1 h-9" />
-                </div>
-                <div>
-                  <Label htmlFor="checkout-phone" className="text-xs">Phone number *</Label>
-                  <Input id="checkout-phone" type="tel" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)}
-                    placeholder="+1 876 555 0100" required className="mt-1 h-9" />
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" disabled={loading || !buyerDetailsValid}>
-                {loading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing…</>
-                ) : paymentMethod === 'bank' ? (
-                  `Reserve & Get Bank Details`
-                ) : (
-                  `Pay ${fmt(total, currency)}`
+                {error && (
+                  <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                    {error}
+                  </div>
                 )}
-              </Button>
 
-              <p className="text-center text-xs text-muted-foreground">
-                {paymentMethod === 'card'
-                  ? 'Secured by Stripe. Your card is not stored.'
-                  : 'Your spot is held for 24 hours after reservation.'}
+                <Button type="submit" className="w-full" disabled={loading || totalTickets === 0}>
+                  {loading ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing…</>
+                  ) : paymentMethod === 'bank' ? (
+                    'Reserve & Get Bank Details'
+                  ) : (
+                    `Pay ${fmt(total, currency)}`
+                  )}
+                </Button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  {paymentMethod === 'card'
+                    ? 'Secured by Stripe. Your card is not stored.'
+                    : 'Your spot is held for 24 hours after reservation.'}
+                </p>
+              </>
+            )}
+
+            {totalTickets === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-2">
+                Select tickets above to continue
               </p>
-            </>
-          )}
-
-          {totalTickets === 0 && (
-            <p className="text-center text-xs text-muted-foreground py-2">
-              Select tickets above to continue
-            </p>
-          )}
-        </form>
+            )}
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

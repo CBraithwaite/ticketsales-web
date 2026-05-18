@@ -40,7 +40,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-accent/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-40 -left-20 h-[400px] w-[400px] rounded-full bg-primary/30 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12 flex items-center justify-between gap-8">
           <div className="max-w-2xl animate-fade-in-up">
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
@@ -49,7 +49,7 @@ export default async function Home() {
             </div>
 
             {/* Headline */}
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
+            <h1 className="mt-3 font-display text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem]">
               Discover{' '}
               <span
                 className="bg-clip-text text-transparent"
@@ -59,16 +59,16 @@ export default async function Home() {
               >
                 Amazing Events
               </span>
-              <br />Across Jamaica
+              {' '}Across Jamaica
             </h1>
 
-            <p className="mt-4 text-base text-white/70 sm:text-lg max-w-xl leading-relaxed">
+            <p className="mt-2 text-sm text-white/70 sm:text-base max-w-xl leading-relaxed">
               From Kingston dancehall parties to Montego Bay beach festivals — find, book,
               and experience the best events on the island.
             </p>
 
             {/* CTA buttons */}
-            <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up-delay">
+            <div className="mt-5 flex flex-wrap gap-3 animate-fade-in-up-delay">
               <Button
                 size="lg"
                 className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg shadow-accent/20 border-0"
@@ -91,18 +91,32 @@ export default async function Home() {
             </div>
 
             {/* Trust stats */}
-            <div className="mt-10 flex flex-wrap gap-5 animate-fade-in-up-delay-2">
+            <div className="mt-4 flex flex-wrap gap-5 animate-fade-in-up-delay-2">
               {[
                 { value: `${events.length}+`, label: 'Live Events' },
                 { value: '14', label: 'Parishes' },
                 { value: '2s', label: 'Gate scan time' },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col">
-                  <span className="font-display text-2xl font-bold text-white">{stat.value}</span>
+                  <span className="font-display text-xl font-bold text-white">{stat.value}</span>
                   <span className="text-xs text-white/50 font-medium">{stat.label}</span>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Right-side Sell Tickets CTA */}
+          <div className="hidden lg:flex shrink-0 flex-col items-center gap-3 animate-fade-in-up">
+            <Button
+              size="lg"
+              className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg px-8"
+              asChild
+            >
+              <Link href={isAuthed ? '/organizer' : '/signup'}>
+                Sell Tickets
+              </Link>
+            </Button>
+            <span className="text-xs text-white/50">For organizers &amp; promoters</span>
           </div>
         </div>
       </section>
