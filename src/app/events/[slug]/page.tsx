@@ -92,9 +92,9 @@ export default async function EventDetailPage({ params }: Props) {
       <div className="mx-auto mt-8 max-w-4xl px-4 sm:px-6">
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left: details */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-8">
             {/* Quick info cards */}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               <Card>
                 <CardContent className="flex items-start gap-3 p-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -141,8 +141,8 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Right: Checkout sidebar */}
-          <div>
+          {/* Right: Checkout panel */}
+          <div className="lg:col-span-2">
             <CheckoutPanel event={ev} />
           </div>
         </div>

@@ -71,7 +71,7 @@ export default async function Home() {
             <div className="mt-5 flex flex-wrap gap-3 animate-fade-in-up-delay">
               <Button
                 size="lg"
-                className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg shadow-accent/20 border-0"
+                className="rounded-sm bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg shadow-accent/20 border-0"
                 asChild
               >
                 <Link href="/#events">
@@ -82,7 +82,7 @@ export default async function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 font-semibold backdrop-blur-sm"
+                  className="rounded-sm border-white/30 bg-white/10 text-white hover:bg-white/20 font-semibold backdrop-blur-sm"
                   asChild
                 >
                   <Link href="/signup">Sell Your Tickets</Link>
@@ -109,7 +109,7 @@ export default async function Home() {
           <div className="hidden lg:flex shrink-0 flex-col items-center gap-3 animate-fade-in-up">
             <Button
               size="lg"
-              className="rounded-full bg-white text-primary hover:bg-white/90 font-semibold shadow-lg px-8"
+              className="rounded-s-sm bg-white text-primary hover:bg-white/90 font-semibold shadow-lg px-8"
               asChild
             >
               <Link href={isAuthed ? '/organizer' : '/signup'}>
@@ -181,7 +181,7 @@ export default async function Home() {
               </p>
             </div>
             {isAuthed && (
-              <Button asChild className="rounded-full mt-1">
+              <Button asChild className="rounded-sm mt-1">
                 <Link href="/organizer">
                   Create an event <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -211,7 +211,7 @@ export default async function Home() {
                 <div className="mt-6 flex flex-wrap gap-3 justify-center">
                   <Button
                     size="lg"
-                    className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold border-0"
+                    className="rounded-sm bg-accent text-accent-foreground hover:bg-accent/90 font-semibold border-0"
                     asChild
                   >
                     <Link href="/signup">Get Started Free</Link>
@@ -219,7 +219,7 @@ export default async function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20"
+                    className="rounded-sm border-white/30 bg-white/10 text-white hover:bg-white/20"
                     asChild
                   >
                     <Link href="/login">Sign in</Link>

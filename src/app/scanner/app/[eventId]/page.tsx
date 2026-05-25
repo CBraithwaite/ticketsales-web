@@ -150,7 +150,20 @@ export default function ScannerDashboard() {
     async (qrData: string) => {
       setScannerOpen(false);
 
-      const ticket = qrMap.current.get(qrData);
+      // Signed QR payloads are JSON: { t: "qrCodeUuidNoHyphens", e: "...", ... }
+      // Normalize "N" format (no hyphens) to standard UUID format for map lookup.
+      let lookupKey = qrData;
+      try {
+        const parsed = JSON.parse(qrData) as { t?: string };
+        if (typeof parsed.t === 'string' && /^[0-9a-f]{32}$/i.test(parsed.t)) {
+          const h = parsed.t.toLowerCase();
+          lookupKey = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+        }
+      } catch {
+        // not JSON — use raw data as-is
+      }
+
+      const ticket = qrMap.current.get(lookupKey);
 
       if (!ticket) {
         setScanResult({ type: 'invalid', message: 'Ticket not found in manifest' });
@@ -421,11 +434,21 @@ export default function ScannerDashboard() {
 
       {/* Scan button */}
       <Button
-        className="mb-4 h-16 w-full text-lg font-semibold"
+        className="mb-3 h-16 w-full text-lg font-semibold"
         size="lg"
         onClick={() => setScannerOpen(true)}
       >
         📷 Scan Ticket
+      </Button>
+
+      {/* Sell tickets (door cash + comp) */}
+      <Button
+        className="mb-4 h-12 w-full text-base font-semibold"
+        size="lg"
+        variant="secondary"
+        onClick={() => router.push(`/scanner/app/${eventId}/sell`)}
+      >
+        💵 Sell Tickets at Door
       </Button>
 
       {/* Actions row */}

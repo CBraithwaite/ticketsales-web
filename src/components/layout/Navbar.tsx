@@ -99,7 +99,7 @@ export default function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-8 gap-2 rounded-full pl-1 pr-2.5 hover:bg-muted"
+                  className="h-8 gap-2 rounded-sm pl-1 pr-2.5 hover:bg-muted"
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarFallback className="text-[10px] font-semibold bg-primary text-primary-foreground">
@@ -149,7 +149,7 @@ export default function Navbar() {
               <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
                 <Link href="/login">Sign in</Link>
               </Button>
-              <Button size="sm" asChild className="rounded-full px-4 font-semibold shadow-sm">
+              <Button size="sm" asChild className="rounded-sm px-4 font-semibold shadow-sm">
                 <Link href="/signup">Get Started</Link>
               </Button>
             </>

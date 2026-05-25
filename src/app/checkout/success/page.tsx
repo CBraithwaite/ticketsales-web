@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QrCodeImage from '@/components/ui/QrCodeImage';
-import { CheckCircle2, Loader2, CalendarDays, MapPin, Ticket } from 'lucide-react';
+import { CheckCircle2, Loader2, CalendarDays, MapPin, Ticket, Mail } from 'lucide-react';
 
 const fmt = (amount: number, currency: string) =>
   `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -37,6 +37,32 @@ function SuccessContent() {
   const [error, setError] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
+  const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
+
+  const emailTickets = useCallback(async () => {
+    if (!orderNumber || !token) return;
+    setEmailState('sending');
+    setEmailMsg(null);
+    try {
+      const res = await fetch(
+        `${getApiBaseUrl()}/api/v1/orders/${encodeURIComponent(orderNumber)}/email-tickets?token=${encodeURIComponent(token)}`,
+        { method: 'POST' },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setEmailState('error');
+        setEmailMsg(data?.error ?? `Failed to send (${res.status}).`);
+        return;
+      }
+      const data = (await res.json()) as { sent: number; email: string };
+      setEmailState('sent');
+      setEmailMsg(`Sent ${data.sent} ticket${data.sent === 1 ? '' : 's'} to ${data.email}`);
+    } catch {
+      setEmailState('error');
+      setEmailMsg('Network error. Please try again.');
+    }
+  }, [orderNumber, token]);
 
   const fetchOrder = useCallback(async () => {
     if (!orderNumber || !token) {
@@ -224,6 +250,35 @@ function SuccessContent() {
               <span>{fmt(order.totalAmount, order.currency)}</span>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Email tickets as PDF */}
+      <Card className="mt-6">
+        <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <div>
+            <p className="font-medium text-sm">Email PDF tickets</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              We sent them to {order.buyerEmail} automatically — re-send anytime.
+            </p>
+            {emailMsg && (
+              <p className={`text-xs mt-1.5 ${emailState === 'error' ? 'text-destructive' : 'text-green-700'}`}>
+                {emailMsg}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={emailTickets}
+            disabled={emailState === 'sending'}
+            className="shrink-0"
+          >
+            {emailState === 'sending' ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+            ) : (
+              <><Mail className="h-4 w-4 mr-2" /> Email me PDF tickets</>
+            )}
+          </Button>
         </CardContent>
       </Card>
 

@@ -21,6 +21,7 @@ interface ScannerInvite {
   createdAt: string;
   expiresAt: string;
   acceptedAt: string | null;
+  canSellAtDoor: boolean;
 }
 
 interface Props {
@@ -44,6 +45,7 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [gate, setGate] = useState('');
+  const [canSellAtDoor, setCanSellAtDoor] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
             name: name.trim(),
             phone: phone.trim() || undefined,
             gate: gate.trim() || undefined,
+            canSellAtDoor,
           }),
         },
       );
@@ -85,6 +88,7 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
       setName('');
       setPhone('');
       setGate('');
+      setCanSellAtDoor(false);
       router.refresh();
     });
 
@@ -177,6 +181,20 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
                 />
               </div>
             </div>
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-background p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={canSellAtDoor}
+                onChange={(e) => setCanSellAtDoor(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span>
+                <span className="font-medium">Can sell tickets at the door</span>
+                <span className="block text-xs text-muted-foreground">
+                  Allows this scanner to take cash and issue comp tickets via the scanner app.
+                </span>
+              </span>
+            </label>
           </div>
           <div className="mt-4 flex gap-2">
             <Button
@@ -220,6 +238,7 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
                 <p className="text-xs text-neutral-500">
                   {s.email}
                   {s.gate && <> · Gate: {s.gate}</>}
+                  {s.canSellAtDoor && <> · 💵 Door sales</>}
                 </p>
                 <p className="text-xs text-neutral-400">
                   {s.status === 'Accepted'

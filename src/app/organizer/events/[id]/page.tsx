@@ -98,11 +98,19 @@ export default async function ManageEventPage({ params }: Props) {
               </p>
             </div>
             {ev.status === 'Published' && (
-              <Button variant="outline" asChild size="sm">
-                <Link href={`/events/${ev.slug}`}>
-                  <Eye className="h-4 w-4 mr-1" /> View Public
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link href={`/organizer/events/${ev.id}/live`}>
+                    <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                    Live Console
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild size="sm">
+                  <Link href={`/events/${ev.slug}`}>
+                    <Eye className="h-4 w-4 mr-1" /> View Public
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
 
