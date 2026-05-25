@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import {
   Ticket, Minus, Plus, Loader2, LogIn,
-  CreditCard, Building2, Copy, CheckCircle2, Clock,
+  CreditCard, Building2, Copy, CheckCircle2, Clock, Wallet,
 } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
 import WaitlistButton from './WaitlistButton';
@@ -32,7 +32,7 @@ interface Props {
   event: EventDetail;
 }
 
-type PaymentMethod = 'card' | 'bank';
+type PaymentMethod = 'card' | 'wipay' | 'bank';
 type BankStep = 'form' | 'instructions';
 
 const FEE_PERCENT = 10;
@@ -189,6 +189,44 @@ export default function CheckoutPanel({ event }: Props) {
     }
   };
 
+  const handleWiPayCheckout = async (buyer: BuyerFormValues) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const reserveRes = await fetch(`${getApiBaseUrl()}/api/v1/checkout/reserve`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(reservePayload(buyer)),
+      });
+
+      if (!reserveRes.ok) {
+        throw new Error(await extractError(reserveRes, `Reservation failed (${reserveRes.status})`));
+      }
+
+      const reservation = await reserveRes.json() as { orderNumber: string; confirmationToken: string };
+
+      const sessionRes = await fetch(`${getApiBaseUrl()}/api/v1/checkout/wipay-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber: reservation.orderNumber,
+          confirmationToken: reservation.confirmationToken,
+        }),
+      });
+
+      if (!sessionRes.ok) {
+        throw new Error(await extractError(sessionRes, `Payment session failed (${sessionRes.status})`));
+      }
+
+      const { checkoutUrl } = await sessionRes.json() as { checkoutUrl: string };
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setLoading(false);
+    }
+  };
+
   const handleBankTransfer = async (buyer: BuyerFormValues) => {
     setLoading(true);
     setError(null);
@@ -218,6 +256,7 @@ export default function CheckoutPanel({ event }: Props) {
   const onSubmit = (buyer: BuyerFormValues) => {
     if (totalTickets === 0) return;
     if (paymentMethod === 'card') handleCardCheckout(buyer);
+    else if (paymentMethod === 'wipay') handleWiPayCheckout(buyer);
     else handleBankTransfer(buyer);
   };
 
@@ -366,11 +405,11 @@ export default function CheckoutPanel({ event }: Props) {
                 </div>
 
                 {/* Payment method toggle */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('card')}
-                    className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
                       paymentMethod === 'card'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-border text-muted-foreground hover:border-foreground/30'
@@ -381,17 +420,35 @@ export default function CheckoutPanel({ event }: Props) {
                   </button>
                   <button
                     type="button"
+                    onClick={() => setPaymentMethod('wipay')}
+                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                      paymentMethod === 'wipay'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    <Wallet className="h-4 w-4" />
+                    WiPay
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setPaymentMethod('bank')}
-                    className={`flex items-center justify-center gap-2 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
                       paymentMethod === 'bank'
                         ? 'border-primary bg-primary/5 text-primary'
                         : 'border-border text-muted-foreground hover:border-foreground/30'
                     }`}
                   >
                     <Building2 className="h-4 w-4" />
-                    Bank Transfer
+                    Bank
                   </button>
                 </div>
+
+                {paymentMethod === 'wipay' && (
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-xs text-green-800">
+                    Pay securely via WiPay — supports credit/debit cards and online banking across the Caribbean.
+                  </div>
+                )}
 
                 {paymentMethod === 'bank' && (
                   <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
@@ -485,6 +542,8 @@ export default function CheckoutPanel({ event }: Props) {
                 <p className="text-center text-xs text-muted-foreground">
                   {paymentMethod === 'card'
                     ? 'Secured by Stripe. Your card is not stored.'
+                    : paymentMethod === 'wipay'
+                    ? 'You will be redirected to WiPay to complete payment.'
                     : 'Your spot is held for 24 hours after reservation.'}
                 </p>
               </>
