@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import QrCodeImage from '@/components/ui/QrCodeImage';
-import { ArrowLeft, Minus, Plus, Gift, Banknote, Check } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Gift, Banknote, Check, Mail, MessageCircle } from 'lucide-react';
 
 interface SaleInfoTier {
   id: string;
@@ -40,6 +40,7 @@ interface DoorSaleTicket {
 
 interface DoorSaleResponse {
   orderNumber: string;
+  confirmationToken: string;
   totalAmount: number;
   currency: string;
   isComp: boolean;
@@ -60,6 +61,8 @@ export default function ScannerSellPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerWhatsApp, setBuyerWhatsApp] = useState('');
   const [isComp, setIsComp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -137,6 +140,8 @@ export default function ScannerSellPage() {
             lines: lines.map((l) => ({ tierId: l.tier.id, quantity: l.qty })),
             buyerName: buyerName.trim() || undefined,
             buyerPhone: buyerPhone.trim() || undefined,
+            buyerEmail: buyerEmail.trim() || undefined,
+            buyerWhatsApp: buyerWhatsApp.trim() || undefined,
             isComp,
           }),
         },
@@ -152,6 +157,8 @@ export default function ScannerSellPage() {
       setQuantities({});
       setBuyerName('');
       setBuyerPhone('');
+      setBuyerEmail('');
+      setBuyerWhatsApp('');
       setIsComp(false);
       fetchInfo();
     } catch {
@@ -186,8 +193,16 @@ export default function ScannerSellPage() {
         </div>
         <p className="font-semibold">{current.tierName}</p>
         <p className="text-sm text-muted-foreground">
-          Buyer phone-photographs this code, then tap Next
+          Show this to the buyer or let them photograph it
         </p>
+        {lastSale.confirmationToken && (
+          <p className="text-xs text-muted-foreground">
+            Link:{' '}
+            <span className="font-mono">
+              /tickets/{lastSale.confirmationToken.slice(0, 8)}…
+            </span>
+          </p>
+        )}
         <div className="mt-2 flex gap-2">
           {activeQrIndex > 0 && (
             <Button variant="outline" onClick={() => setActiveQrIndex((i) => i - 1)}>
@@ -329,6 +344,34 @@ export default function ScannerSellPage() {
               className="h-11"
               inputMode="tel"
             />
+          </div>
+
+          <p className="mb-2 mt-4 text-sm font-medium">Send ticket to buyer</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Fill in one or both — buyer receives a link to their QR codes.
+          </p>
+          <div className="grid gap-2">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Email address"
+                type="email"
+                value={buyerEmail}
+                onChange={(e) => setBuyerEmail(e.target.value)}
+                className="h-11 pl-9"
+                inputMode="email"
+              />
+            </div>
+            <div className="relative">
+              <MessageCircle className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="WhatsApp number (e.g. +18761234567)"
+                value={buyerWhatsApp}
+                onChange={(e) => setBuyerWhatsApp(e.target.value)}
+                className="h-11 pl-9"
+                inputMode="tel"
+              />
+            </div>
           </div>
         </>
       )}
