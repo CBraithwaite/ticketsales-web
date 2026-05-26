@@ -8,6 +8,8 @@ import PromoCodeManager from '@/components/events/PromoCodeManager';
 import ScannerManager from '@/components/events/ScannerManager';
 import CompManager from '@/components/events/CompManager';
 import OrderExportButton from '@/components/events/OrderExportButton';
+import RefundManager from '@/components/events/RefundManager';
+import EventImageManager from '@/components/events/EventImageManager';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -72,6 +74,10 @@ export default async function ManageEventPage({ params }: Props) {
   // Fetch comp tickets for this event
   const compsRes = await authedFetch(`/api/v1/events/${params.id}/comps`);
   const comps = compsRes.ok ? await compsRes.json() : [];
+
+  // Fetch refund requests for this event
+  const refundsRes = await authedFetch(`/api/v1/events/${params.id}/refunds`);
+  const refunds = refundsRes.ok ? await refundsRes.json() : [];
 
   const cat = (CATEGORY_LABELS as Record<string, string>)[ev.category] ?? ev.category;
   const parish = (PARISH_LABELS as Record<string, string>)[ev.parish] ?? ev.parish;
@@ -164,6 +170,8 @@ export default async function ManageEventPage({ params }: Props) {
           <PromoCodeManager eventId={ev.id} promoCodes={promoCodes} tiers={ev.tiers} />
           <ScannerManager eventId={ev.id} scanners={scanners} />
           <CompManager eventId={ev.id} tiers={ev.tiers} comps={comps} />
+          <RefundManager eventId={ev.id} refunds={refunds} />
+          <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl} galleryUrls={ev.galleryUrls} />
         </CardContent>
       </Card>
     </div>

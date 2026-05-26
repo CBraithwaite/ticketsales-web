@@ -6,7 +6,7 @@ import { getApiBaseUrl } from '@/lib/api';
 import QrCodeImage from '@/components/ui/QrCodeImage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 interface TicketItem {
   tierName: string;
@@ -134,6 +134,15 @@ export default function TicketViewPage() {
           </Button>
         </div>
       )}
+
+      {/* PDF download */}
+      <a
+        href={`${getApiBaseUrl()}/api/v1/tickets/pdf/${token}`}
+        download={`tickets-${data.orderNumber}.pdf`}
+        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+      >
+        <Download className="h-4 w-4" /> Download PDF
+      </a>
 
       {/* Footer instruction */}
       <p className="mt-auto text-center text-xs text-muted-foreground">

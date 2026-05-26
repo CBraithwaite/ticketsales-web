@@ -69,9 +69,22 @@ export interface EventDetail {
   ageRestriction: string | null;
   dressCode: string | null;
   coverImageUrl: string | null;
+  galleryUrls: string[];
   timeZone: string;
   organizer: { id: string; businessName: string };
   tiers: TierResponse[];
+}
+
+export interface OrganizerRefundSummary {
+  id: string;
+  orderNumber: string;
+  buyerName: string;
+  status: 'Requested' | 'Approved' | 'Rejected' | 'Processing' | 'Refunded';
+  amount: number;
+  currency: string;
+  reason: string;
+  requestedAt: string;
+  resolvedAt: string | null;
 }
 
 /** Constants matching backend enums (order matters where it matters). */
