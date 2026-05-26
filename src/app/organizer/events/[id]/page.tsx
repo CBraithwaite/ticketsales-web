@@ -7,6 +7,7 @@ import TierManager from '@/components/events/TierManager';
 import PromoCodeManager from '@/components/events/PromoCodeManager';
 import ScannerManager from '@/components/events/ScannerManager';
 import CompManager from '@/components/events/CompManager';
+import OrderExportButton from '@/components/events/OrderExportButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,7 @@ export default async function ManageEventPage({ params }: Props) {
                     <Eye className="h-4 w-4 mr-1" /> View Public
                   </Link>
                 </Button>
+                <OrderExportButton eventId={ev.id} eventSlug={ev.slug} />
               </div>
             )}
           </div>
