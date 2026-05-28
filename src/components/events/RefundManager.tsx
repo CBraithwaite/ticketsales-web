@@ -132,7 +132,7 @@ export default function RefundManager({ eventId, refunds: initial }: Props) {
                     Requested {fmtDate(r.requestedAt)}
                     {r.resolvedAt && ` · Resolved ${fmtDate(r.resolvedAt)}`}
                   </p>
-                  <p className="mt-1 text-sm text-muted-foreground italic">"{r.reason}"</p>
+                  <p className="mt-1 text-sm text-muted-foreground italic">&quot;{r.reason}&quot;</p>
                 </div>
 
                 {r.status === 'Requested' && (
