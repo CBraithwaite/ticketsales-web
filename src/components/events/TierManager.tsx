@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { DateTimePicker } from '@/components/ui/DateTimePicker';
 
 interface Props {
   eventId: string;
@@ -324,18 +325,20 @@ export default function TierManager({ eventId, tiers: initialTiers }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="mb-1">Sale starts at</Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  clearable
+                  placeholder="Optional"
                   value={form.saleStartsAt}
-                  onChange={(e) => setForm({ ...form, saleStartsAt: e.target.value })}
+                  onChange={(v) => setForm({ ...form, saleStartsAt: v })}
                 />
               </div>
               <div>
                 <Label className="mb-1">Sale ends at</Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  clearable
+                  placeholder="Optional"
                   value={form.saleEndsAt}
-                  onChange={(e) => setForm({ ...form, saleEndsAt: e.target.value })}
+                  onChange={(v) => setForm({ ...form, saleEndsAt: v })}
                 />
               </div>
             </div>

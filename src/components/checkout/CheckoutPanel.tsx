@@ -23,14 +23,30 @@ import {
 } from '@/components/ui/form';
 import {
   Ticket, Minus, Plus, Loader2, LogIn,
-  CreditCard, Building2, Copy, CheckCircle2, Clock, Wallet,
+  CreditCard, Building2, Copy, CheckCircle2, Clock, Wallet, Search,
+  ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
 import WaitlistButton from './WaitlistButton';
+import type { OccurrenceResponse } from '@/types/api';
 
 interface Props {
   event: EventDetail;
 }
+
+const fmtOccurrence = (startIso: string, endIso: string) => {
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: 'America/Jamaica',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  };
+  const start = new Date(startIso).toLocaleString('en-JM', opts);
+  const end = new Date(endIso).toLocaleString('en-JM', { timeZone: 'America/Jamaica', hour: 'numeric', minute: '2-digit' });
+  return `${start} – ${end}`;
+};
 
 type PaymentMethod = 'card' | 'wipay' | 'bank';
 type BankStep = 'form' | 'instructions';
@@ -76,6 +92,9 @@ export default function CheckoutPanel({ event }: Props) {
   const [bankStep, setBankStep] = useState<BankStep>('form');
   const [copied, setCopied] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [dateQuery, setDateQuery] = useState('');
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
   const form = useForm<BuyerFormValues>({
     resolver: zodResolver(BuyerSchema),
@@ -96,6 +115,9 @@ export default function CheckoutPanel({ event }: Props) {
   const now = new Date();
   const eventStarted = new Date(event.startsAt) <= now;
 
+  const isSeries = event.type === 'Series' && !!event.occurrences;
+  const allTiers = isSeries ? event.occurrences!.flatMap((o) => o.tiers) : event.tiers;
+
   const adjustQty = (tier: TierResponse, delta: number) => {
     setQuantities((prev) => {
       const current = prev[tier.id] ?? 0;
@@ -115,12 +137,94 @@ export default function CheckoutPanel({ event }: Props) {
   const selectedTierIds = Object.keys(quantities).filter((id) => (quantities[id] ?? 0) > 0);
   const currency =
     selectedTierIds.length > 0
-      ? (event.tiers.find((t) => t.id === selectedTierIds[0])?.currency ?? 'JMD')
-      : (event.tiers[0]?.currency ?? 'JMD');
+      ? (allTiers.find((t) => t.id === selectedTierIds[0])?.currency ?? 'JMD')
+      : (allTiers[0]?.currency ?? 'JMD');
 
-  const subtotal = event.tiers.reduce((sum, tier) => sum + tier.priceAmount * (quantities[tier.id] ?? 0), 0);
+  const subtotal = allTiers.reduce((sum, tier) => sum + tier.priceAmount * (quantities[tier.id] ?? 0), 0);
   const fees = Math.round(subtotal * (FEE_PERCENT / 100) * 100) / 100;
   const total = subtotal + fees;
+
+  // Series: upcoming, still-scheduled dates only (past dates can't be bought).
+  const scheduledOccurrences: OccurrenceResponse[] = isSeries
+    ? event.occurrences!.filter((o) => o.status === 'Scheduled' && new Date(o.startsAt) > now)
+    : [];
+  const q = dateQuery.trim().toLowerCase();
+  const filteredOccurrences = scheduledOccurrences.filter((o) => {
+    if (onlyAvailable && o.remainingInventory <= 0) return false;
+    if (!q) return true;
+    return `${o.label ?? ''} ${fmtOccurrence(o.startsAt, o.endsAt)}`.toLowerCase().includes(q);
+  });
+
+  const occSelectedCount = (o: OccurrenceResponse) =>
+    o.tiers.reduce((s, t) => s + (quantities[t.id] ?? 0), 0);
+
+  // A date is open if the buyer explicitly toggled it, else auto-open when it has a
+  // selection, the buyer is searching, or there's only one date to show.
+  const isDateOpen = (o: OccurrenceResponse) =>
+    expandedDates[o.id] ??
+    (occSelectedCount(o) > 0 || q.length > 0 || filteredOccurrences.length === 1);
+  const toggleDate = (o: OccurrenceResponse) =>
+    setExpandedDates((prev) => ({ ...prev, [o.id]: !isDateOpen(o) }));
+
+  // Per-date breakdown of what's in the cart (independent of the current search filter).
+  const selectionByDate = scheduledOccurrences
+    .map((o) => ({
+      occ: o,
+      lines: o.tiers
+        .filter((t) => (quantities[t.id] ?? 0) > 0)
+        .map((t) => ({ name: t.name, qty: quantities[t.id], amount: t.priceAmount, currency: t.currency })),
+    }))
+    .filter((x) => x.lines.length > 0);
+
+  const renderTier = (tier: TierResponse, started: boolean) => {
+    const soldOut = tier.inventoryAvailable <= 0;
+    const onSaleYet = tier.saleStartsAt ? new Date(tier.saleStartsAt) > now : false;
+    const saleEnded = tier.saleEndsAt ? new Date(tier.saleEndsAt) < now : false;
+    const unavailable = soldOut || onSaleYet || saleEnded || started;
+    const qty = quantities[tier.id] ?? 0;
+
+    return (
+      <li key={tier.id} className="rounded-lg border p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-medium text-sm">{tier.name}</p>
+            {tier.description && (
+              <p className="text-xs text-muted-foreground mt-0.5">{tier.description}</p>
+            )}
+          </div>
+          <p className="text-sm font-bold whitespace-nowrap shrink-0">
+            {fmt(tier.priceAmount, tier.currency)}
+          </p>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            {soldOut ? 'Sold out'
+              : onSaleYet ? 'Not on sale yet'
+              : saleEnded ? 'Sale ended'
+              : started ? 'Date passed'
+              : `${tier.inventoryAvailable} available`}
+          </span>
+          {!unavailable && (
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                disabled={qty === 0} onClick={() => adjustQty(tier, -1)}>
+                <Minus className="h-3 w-3" />
+              </Button>
+              <span className="w-6 text-center text-sm font-medium">{qty}</span>
+              <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                disabled={qty >= Math.min(tier.maxPerOrder, tier.inventoryAvailable)}
+                onClick={() => adjustQty(tier, 1)}>
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+        {soldOut && !started && (
+          <WaitlistButton eventId={event.id} tierId={tier.id} tierName={tier.name} />
+        )}
+      </li>
+    );
+  };
 
   const extractError = async (res: Response, fallback: string): Promise<string> => {
     const body = await res.json().catch(() => ({})) as {
@@ -333,61 +437,114 @@ export default function CheckoutPanel({ event }: Props) {
               <h2 className="text-lg font-semibold">Get Tickets</h2>
             </div>
 
-            {/* Tier list */}
-            <ul className="space-y-3">
-              {event.tiers.map((tier) => {
-                const soldOut = tier.inventoryAvailable <= 0;
-                const onSaleYet = tier.saleStartsAt ? new Date(tier.saleStartsAt) > now : false;
-                const saleEnded = tier.saleEndsAt ? new Date(tier.saleEndsAt) < now : false;
-                const unavailable = soldOut || onSaleYet || saleEnded || eventStarted;
-                const qty = quantities[tier.id] ?? 0;
+            {/* Single-date: flat tier list */}
+            {!isSeries && (
+              <ul className="space-y-3">
+                {event.tiers.map((tier) => renderTier(tier, eventStarted))}
+              </ul>
+            )}
 
-                return (
-                  <li key={tier.id} className="rounded-lg border p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">{tier.name}</p>
-                        {tier.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{tier.description}</p>
-                        )}
-                      </div>
-                      <p className="text-sm font-bold whitespace-nowrap shrink-0">
-                        {fmt(tier.priceAmount, tier.currency)}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {soldOut ? 'Sold out'
-                          : onSaleYet ? 'Not on sale yet'
-                          : saleEnded ? 'Sale ended'
-                          : eventStarted ? 'Event started'
-                          : `${tier.inventoryAvailable} available`}
-                      </span>
-                      {!unavailable && (
-                        <div className="flex items-center gap-1">
-                          <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                            disabled={qty === 0} onClick={() => adjustQty(tier, -1)}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-6 text-center text-sm font-medium">{qty}</span>
-                          <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                            disabled={qty >= Math.min(tier.maxPerOrder, tier.inventoryAvailable)}
-                            onClick={() => adjustQty(tier, 1)}>
-                            <Plus className="h-3 w-3" />
-                          </Button>
+            {/* Series: searchable, collapsible date list — each date holds its own tiers */}
+            {isSeries && (
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {scheduledOccurrences.length} upcoming date{scheduledOccurrences.length !== 1 ? 's' : ''}
+                  {' · '}pick one or more
+                </p>
+
+                {scheduledOccurrences.length > 3 && (
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search dates"
+                      className="h-9 pl-8"
+                      value={dateQuery}
+                      onChange={(e) => setDateQuery(e.target.value)}
+                    />
+                  </div>
+                )}
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded border-input"
+                    checked={onlyAvailable}
+                    onChange={(e) => setOnlyAvailable(e.target.checked)}
+                  />
+                  Only show dates with tickets available
+                </label>
+
+                {filteredOccurrences.map((occ) => {
+                  const open = isDateOpen(occ);
+                  const selected = occSelectedCount(occ);
+                  const soldOut = occ.remainingInventory <= 0;
+                  return (
+                    <div key={occ.id} className="rounded-lg border overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => toggleDate(occ)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">
+                            {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {soldOut
+                              ? 'Sold out'
+                              : `${occ.remainingInventory} left · from ${fmt(occ.lowestPriceAmount, occ.lowestPriceCurrency)}`}
+                          </p>
                         </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {selected > 0 && (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                              {selected}
+                            </span>
+                          )}
+                          {open ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+                      {open && (
+                        <ul className="space-y-2 border-t p-2">
+                          {occ.tiers.map((tier) => renderTier(tier, false))}
+                        </ul>
                       )}
                     </div>
-                    {soldOut && !eventStarted && (
-                      <WaitlistButton eventId={event.id} tierId={tier.id} tierName={tier.name} />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                  );
+                })}
+
+                {filteredOccurrences.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-3">
+                    {scheduledOccurrences.length === 0 ? 'No upcoming dates on sale.' : 'No dates match your search.'}
+                  </p>
+                )}
+              </div>
+            )}
 
             {totalTickets > 0 && (
               <>
+                {/* Per-date breakdown (series only) */}
+                {isSeries && selectionByDate.length > 0 && (
+                  <div className="rounded-lg border p-3 space-y-2.5 text-sm">
+                    {selectionByDate.map(({ occ, lines }) => (
+                      <div key={occ.id} className="space-y-1">
+                        <p className="text-xs font-semibold">
+                          {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt)}
+                        </p>
+                        {lines.map((l, i) => (
+                          <div key={i} className="flex justify-between text-xs text-muted-foreground">
+                            <span>{l.qty}× {l.name}</span>
+                            <span>{fmt(l.amount * l.qty, l.currency)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Price summary */}
                 <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">

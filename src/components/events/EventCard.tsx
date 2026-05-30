@@ -30,6 +30,7 @@ export default function EventCard({ event }: { event: EventListItem }) {
   const cat = (CATEGORY_LABELS as Record<string, string>)[event.category] ?? event.category;
   const parish = (PARISH_LABELS as Record<string, string>)[event.parish] ?? event.parish;
   const date = fmtDay(event.startsAt);
+  const isSeries = event.type === 'Series';
 
   return (
     <Link
@@ -74,6 +75,11 @@ export default function EventCard({ event }: { event: EventListItem }) {
           {limited && (
             <Badge className="bg-amber-500/90 text-white border-0 text-[11px] font-medium">
               Few left
+            </Badge>
+          )}
+          {isSeries && (
+            <Badge className="bg-primary/90 text-white border-0 text-[11px] font-medium">
+              {event.occurrenceCount > 0 ? `${event.occurrenceCount} dates` : 'Multiple dates'}
             </Badge>
           )}
         </div>

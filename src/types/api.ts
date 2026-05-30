@@ -17,6 +17,8 @@ export interface OrganizerResponse {
   payoutCurrency: string;
 }
 
+export type EventType = 'SingleDate' | 'Series';
+
 export interface TierResponse {
   id: string;
   name: string;
@@ -34,6 +36,21 @@ export interface TierResponse {
   saleStartsAt: string | null;
   saleEndsAt: string | null;
   displayOrder: number;
+  occurrenceId: string | null;
+}
+
+export interface OccurrenceResponse {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  doorsAt: string | null;
+  label: string | null;
+  status: 'Scheduled' | 'Cancelled';
+  displayOrder: number;
+  tiers: TierResponse[];
+  remainingInventory: number;
+  lowestPriceAmount: number;
+  lowestPriceCurrency: 'JMD' | 'USD';
 }
 
 export interface EventListItem {
@@ -51,6 +68,8 @@ export interface EventListItem {
   lowestPriceCurrency: 'JMD' | 'USD';
   totalInventory: number;
   remainingInventory: number;
+  type: EventType;
+  occurrenceCount: number;
 }
 
 export interface EventDetail {
@@ -73,6 +92,8 @@ export interface EventDetail {
   timeZone: string;
   organizer: { id: string; businessName: string };
   tiers: TierResponse[];
+  type: EventType;
+  occurrences: OccurrenceResponse[] | null;
 }
 
 export interface OrganizerRefundSummary {

@@ -102,8 +102,21 @@ export default async function EventDetailPage({ params }: Props) {
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">When</p>
-                    <p className="mt-0.5 text-sm font-medium">{fmtDateRange(ev.startsAt, ev.endsAt)}</p>
-                    <p className="text-xs text-muted-foreground">{ev.timeZone}</p>
+                    {ev.type === 'Series' ? (
+                      <>
+                        <p className="mt-0.5 text-sm font-medium">
+                          {ev.occurrences?.length ?? 0} dates · choose your date when getting tickets
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {fmtDateRange(ev.startsAt, ev.endsAt)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-0.5 text-sm font-medium">{fmtDateRange(ev.startsAt, ev.endsAt)}</p>
+                        <p className="text-xs text-muted-foreground">{ev.timeZone}</p>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
