@@ -135,6 +135,25 @@ const shiftDay = (s: string | undefined, days: number) => {
   return toLocalInput(d);
 };
 
+type RepeatFreq = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+const REPEAT_LABELS: Record<RepeatFreq, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
+};
+// Shift a local datetime string forward by `n` units of the given frequency.
+const shiftBy = (s: string | undefined, freq: RepeatFreq, n: number) => {
+  if (!s) return '';
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  if (freq === 'daily') d.setDate(d.getDate() + n);
+  else if (freq === 'weekly') d.setDate(d.getDate() + 7 * n);
+  else if (freq === 'biweekly') d.setDate(d.getDate() + 14 * n);
+  else d.setMonth(d.getMonth() + n);
+  return toLocalInput(d);
+};
+
 async function extractError(res: Response): Promise<string> {
   try {
     const body = await res.json();
@@ -204,6 +223,29 @@ export default function CreateEventForm() {
       label: src.label ? `${src.label} (copy)` : '',
       tiers: (src.tiers ?? []).map((t) => ({ ...t })),
     });
+  };
+
+  // Recurrence generator: clone the last date forward at a fixed interval.
+  const [repeatFreq, setRepeatFreq] = useState<RepeatFreq>('weekly');
+  const [repeatCount, setRepeatCount] = useState(4);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const generateDates = () => {
+    setGenError(null);
+    const list = form.getValues('occurrences') ?? [];
+    const template = list[list.length - 1];
+    if (!template?.startsAt || !template?.endsAt) {
+      setGenError("Fill in the last date's start and end time first — new dates copy it.");
+      return;
+    }
+    const count = Math.max(1, Math.min(52, Number(repeatCount) || 0));
+    const added = Array.from({ length: count }, (_, i) => ({
+      startsAt: shiftBy(template.startsAt, repeatFreq, i + 1),
+      endsAt: shiftBy(template.endsAt, repeatFreq, i + 1),
+      label: '',
+      tiers: (template.tiers ?? [blankTier()]).map((t) => ({ ...t })),
+    }));
+    occurrences.append(added);
   };
 
   // Live summary of the series being built.
@@ -577,6 +619,42 @@ export default function CreateEventForm() {
                 New dates copy the previous date&apos;s tiers and time — just adjust the day.
               </p>
             )}
+
+            {/* Recurrence generator */}
+            <div className="rounded-lg border border-dashed p-3 space-y-2">
+              <p className="text-xs font-medium">Repeat the last date</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={repeatFreq}
+                  onChange={(e) => setRepeatFreq(e.target.value as RepeatFreq)}
+                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm outline-none focus-visible:border-ring"
+                >
+                  {(Object.keys(REPEAT_LABELS) as RepeatFreq[]).map((f) => (
+                    <option key={f} value={f}>{REPEAT_LABELS[f]}</option>
+                  ))}
+                </select>
+                <span className="text-sm text-muted-foreground">×</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={52}
+                  value={repeatCount}
+                  onChange={(e) => setRepeatCount(Number(e.target.value))}
+                  className="h-9 w-16"
+                />
+                <span className="text-sm text-muted-foreground">more</span>
+                <Button type="button" variant="secondary" size="sm" onClick={generateDates}>
+                  Generate
+                </Button>
+              </div>
+              {genError ? (
+                <p className="text-xs text-destructive">{genError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Adds dates after the last one, copying its time and tiers.
+                </p>
+              )}
+            </div>
 
             {form.formState.errors.occurrences?.message && (
               <p className="text-sm text-destructive">{form.formState.errors.occurrences.message}</p>
