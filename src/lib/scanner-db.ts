@@ -7,6 +7,8 @@ export interface ManifestTicket {
   holderName: string;
   tierName: string;
   status: string;
+  occurrenceId?: string | null;
+  occurrenceLabel?: string | null;
 }
 
 export interface PendingScan {
@@ -18,6 +20,8 @@ export interface PendingScan {
   result: string;
   holderName: string;
   tierName: string;
+  /** For series events: the date the device was gating when this scan was captured. */
+  occurrenceId?: string | null;
 }
 
 export interface ScanHistoryEntry {
@@ -58,6 +62,7 @@ function openDB(): Promise<IDBDatabase> {
 export async function saveManifest(
   eventId: string,
   tickets: ManifestTicket[],
+  occurrenceId?: string | null,
 ): Promise<void> {
   const db = await openDB();
   const tx = db.transaction(['manifest', 'manifestMeta'], 'readwrite');
@@ -69,7 +74,7 @@ export async function saveManifest(
   for (const t of tickets) {
     store.put(t);
   }
-  metaStore.put({ eventId, savedAt: new Date().toISOString(), count: tickets.length });
+  metaStore.put({ eventId, occurrenceId: occurrenceId ?? null, savedAt: new Date().toISOString(), count: tickets.length });
 
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => { db.close(); resolve(); };
