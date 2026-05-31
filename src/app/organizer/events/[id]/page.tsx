@@ -4,6 +4,7 @@ import { authedFetch } from '@/lib/server-fetch';
 import type { EventDetail } from '@/types/api';
 import { CATEGORY_LABELS, PARISH_LABELS } from '@/types/api';
 import TierManager from '@/components/events/TierManager';
+import OccurrenceManager from '@/components/events/OccurrenceManager';
 import PromoCodeManager from '@/components/events/PromoCodeManager';
 import ScannerManager from '@/components/events/ScannerManager';
 import CompManager from '@/components/events/CompManager';
@@ -82,9 +83,13 @@ export default async function ManageEventPage({ params }: Props) {
   const cat = (CATEGORY_LABELS as Record<string, string>)[ev.category] ?? ev.category;
   const parish = (PARISH_LABELS as Record<string, string>)[ev.parish] ?? ev.parish;
 
-  const totalInventory = ev.tiers.reduce((s, t) => s + t.inventoryTotal, 0);
-  const totalSold = ev.tiers.reduce((s, t) => s + t.inventorySold, 0);
-  const totalAvailable = ev.tiers.reduce((s, t) => s + t.inventoryAvailable, 0);
+  const isSeries = ev.type === 'Series';
+  // For series, tiers live under occurrences; flatten them for summaries and tier-scoped managers.
+  const allTiers = isSeries ? (ev.occurrences ?? []).flatMap((o) => o.tiers) : ev.tiers;
+
+  const totalInventory = allTiers.reduce((s, t) => s + t.inventoryTotal, 0);
+  const totalSold = allTiers.reduce((s, t) => s + t.inventorySold, 0);
+  const totalAvailable = allTiers.reduce((s, t) => s + t.inventoryAvailable, 0);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -106,7 +111,9 @@ export default async function ManageEventPage({ params }: Props) {
                 {cat} · {parish} · {ev.venueName}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {fmtDate(ev.startsAt)} — {fmtDate(ev.endsAt)}
+                {isSeries
+                  ? `Series · ${(ev.occurrences ?? []).length} dates`
+                  : `${fmtDate(ev.startsAt)} — ${fmtDate(ev.endsAt)}`}
               </p>
             </div>
             {ev.status === 'Published' && (
@@ -166,10 +173,14 @@ export default async function ManageEventPage({ params }: Props) {
             </Card>
           </div>
 
-          <TierManager eventId={ev.id} tiers={ev.tiers} />
-          <PromoCodeManager eventId={ev.id} promoCodes={promoCodes} tiers={ev.tiers} />
+          {isSeries ? (
+            <OccurrenceManager eventId={ev.id} occurrences={ev.occurrences ?? []} />
+          ) : (
+            <TierManager eventId={ev.id} tiers={ev.tiers} />
+          )}
+          <PromoCodeManager eventId={ev.id} promoCodes={promoCodes} tiers={allTiers} />
           <ScannerManager eventId={ev.id} scanners={scanners} />
-          <CompManager eventId={ev.id} tiers={ev.tiers} comps={comps} />
+          <CompManager eventId={ev.id} tiers={allTiers} comps={comps} />
           <RefundManager eventId={ev.id} refunds={refunds} />
           <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl} galleryUrls={ev.galleryUrls} />
         </CardContent>

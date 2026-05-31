@@ -25,13 +25,32 @@ import {
 import QrScanner from '@/components/scanner/QrScanner';
 import ScanResult, { type ScanResultData } from '@/components/scanner/ScanResult';
 
+interface ManifestOccurrence {
+  id: string;
+  label: string | null;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+}
+
 interface ManifestResponse {
   eventId: string;
   eventName: string;
   gate: string | null;
   generatedAt: string;
   tickets: ManifestTicket[];
+  eventType: 'SingleDate' | 'Series';
+  occurrenceId: string | null;
+  occurrenceLabel: string | null;
+  occurrences: ManifestOccurrence[] | null;
 }
+
+const fmtOcc = (o: ManifestOccurrence) => {
+  const d = new Date(o.startsAt).toLocaleString('en-JM', {
+    timeZone: 'America/Jamaica', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+  return o.label ? `${o.label} · ${d}` : d;
+};
 
 function generateDeviceId(): string {
   const stored = localStorage.getItem('scanner-device-id');
@@ -50,6 +69,10 @@ export default function ScannerDashboard() {
   const [tickets, setTickets] = useState<ManifestTicket[]>([]);
   const [eventName, setEventName] = useState('');
   const [gate, setGate] = useState<string | null>(null);
+  const [eventType, setEventType] = useState<'SingleDate' | 'Series'>('SingleDate');
+  const [occurrences, setOccurrences] = useState<ManifestOccurrence[]>([]);
+  const [occurrenceId, setOccurrenceId] = useState<string | null>(null);
+  const [occurrenceLabel, setOccurrenceLabel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -70,30 +93,27 @@ export default function ScannerDashboard() {
     }
   }, [status, router, eventId]);
 
-  // Initialize device ID
+  // Initialize device ID + restore the previously chosen series date
   useEffect(() => {
     deviceId.current = generateDeviceId();
-  }, []);
+    const saved = localStorage.getItem(`scanner-occ-${eventId}`);
+    if (saved) setOccurrenceId(saved);
+  }, [eventId]);
 
-  // Load manifest
-  const fetchManifest = useCallback(async () => {
+  // Load manifest, scoped to the chosen date for series events.
+  const fetchManifest = useCallback(async (occId: string | null) => {
     if (!session?.accessToken) return;
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(
-        `${getApiBaseUrl()}/api/v1/scanner/events/${eventId}/manifest`,
-        { headers: { Authorization: `Bearer ${session.accessToken}` } },
-      );
+      const url = new URL(`${getApiBaseUrl()}/api/v1/scanner/events/${eventId}/manifest`);
+      if (occId) url.searchParams.set('occurrenceId', occId);
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.accessToken}` } });
 
       if (!res.ok) {
-        if (res.status === 403) {
-          setError('You do not have access to scan this event.');
-        } else {
-          setError(`Failed to load manifest (${res.status}).`);
-        }
-        // Try loading from cache
+        if (res.status === 403) setError('You do not have access to scan this event.');
+        else setError(`Failed to load manifest (${res.status}).`);
         const cached = await getManifest(eventId);
         if (cached.length > 0) {
           setTickets(cached);
@@ -106,13 +126,21 @@ export default function ScannerDashboard() {
       const data: ManifestResponse = await res.json();
       setEventName(data.eventName);
       setGate(data.gate);
+      setEventType(data.eventType);
+      setOccurrences(data.occurrences ?? []);
+      setOccurrenceLabel(data.occurrenceLabel);
+
+      // Series with no date chosen yet → show the date picker, don't load tickets.
+      if (data.eventType === 'Series' && !occId) {
+        setTickets([]);
+        setLoading(false);
+        return;
+      }
+
       setTickets(data.tickets);
       setLastRefresh(new Date().toLocaleTimeString('en-JM', { timeZone: 'America/Jamaica' }));
-
-      // Cache in IndexedDB
-      await saveManifest(eventId, data.tickets);
+      await saveManifest(eventId, data.tickets, occId);
     } catch {
-      // Offline — try cache
       const cached = await getManifest(eventId);
       if (cached.length > 0) {
         setTickets(cached);
@@ -126,8 +154,18 @@ export default function ScannerDashboard() {
   }, [session?.accessToken, eventId]);
 
   useEffect(() => {
-    if (session?.accessToken) fetchManifest();
-  }, [session?.accessToken, fetchManifest]);
+    if (session?.accessToken) fetchManifest(occurrenceId);
+  }, [session?.accessToken, occurrenceId, fetchManifest]);
+
+  const chooseOccurrence = useCallback((occId: string) => {
+    localStorage.setItem(`scanner-occ-${eventId}`, occId);
+    setOccurrenceId(occId);
+  }, [eventId]);
+
+  const changeDate = useCallback(() => {
+    localStorage.removeItem(`scanner-occ-${eventId}`);
+    setOccurrenceId(null);
+  }, [eventId]);
 
   // Load recent scans
   useEffect(() => {
@@ -217,6 +255,7 @@ export default function ScannerDashboard() {
         result: 'valid',
         holderName: ticket.holderName,
         tierName: ticket.tierName,
+        occurrenceId,
       };
       await addPendingScan(pending);
       setPendingCount((c) => c + 1);
@@ -233,7 +272,7 @@ export default function ScannerDashboard() {
       await addScanHistory(historyEntry);
       setRecentScans((prev) => [historyEntry, ...prev].slice(0, 20));
     },
-    [gate],
+    [gate, occurrenceId],
   );
 
   // Batch sync pending scans
@@ -248,25 +287,39 @@ export default function ScannerDashboard() {
         return;
       }
 
-      const res = await fetch(`${getApiBaseUrl()}/api/v1/scanner/scan-batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: JSON.stringify({
-          scans: pending.map((s) => ({
-            ticketId: s.ticketId,
-            scannedAt: s.scannedAt,
-            deviceId: s.deviceId,
-            gate: s.gate,
-          })),
-        }),
-      });
+      // Group by the date each scan was captured for, so each batch carries the
+      // right occurrenceId and the server can flag wrong-date scans.
+      const groups = new Map<string, PendingScan[]>();
+      for (const s of pending) {
+        const key = s.occurrenceId ?? '';
+        (groups.get(key) ?? groups.set(key, []).get(key)!).push(s);
+      }
 
-      if (res.ok) {
-        await clearPendingScans(pending.map((s) => s.id));
-        setPendingCount(0);
+      const synced: string[] = [];
+      for (const [key, scans] of groups) {
+        const res = await fetch(`${getApiBaseUrl()}/api/v1/scanner/scan-batch`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+          body: JSON.stringify({
+            occurrenceId: key || null,
+            scans: scans.map((s) => ({
+              ticketId: s.ticketId,
+              scannedAt: s.scannedAt,
+              deviceId: s.deviceId,
+              gate: s.gate,
+            })),
+          }),
+        });
+        if (res.ok) synced.push(...scans.map((s) => s.id));
+      }
+
+      if (synced.length > 0) {
+        await clearPendingScans(synced);
+        const remaining = await getPendingScans();
+        setPendingCount(remaining.length);
       }
     } catch {
       // Will retry on next sync
@@ -336,6 +389,7 @@ export default function ScannerDashboard() {
         result: 'valid',
         holderName: ticket.holderName,
         tierName: ticket.tierName,
+        occurrenceId,
       });
       setPendingCount((c) => c + 1);
 
@@ -364,7 +418,7 @@ export default function ScannerDashboard() {
       setSearchQuery('');
       setSearchResults(null);
     },
-    [gate],
+    [gate, occurrenceId],
   );
 
   // Stats
@@ -382,11 +436,51 @@ export default function ScannerDashboard() {
 
   if (status === 'unauthenticated') return null;
 
+  // Series: the scanner must choose which date they're gating before scanning.
+  if (eventType === 'Series' && !occurrenceId) {
+    return (
+      <main className="mx-auto max-w-lg px-4 pb-32 pt-4">
+        <h1 className="mb-1 text-xl font-bold leading-tight">{eventName || 'Scanner'}</h1>
+        <p className="mb-4 text-sm text-muted-foreground">Which date are you scanning?</p>
+        {error && (
+          <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">{error}</div>
+        )}
+        <div className="space-y-2">
+          {occurrences.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => chooseOccurrence(o.id)}
+              className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted/40"
+            >
+              <span className="text-sm font-medium">{fmtOcc(o)}</span>
+              <span className="text-xs font-semibold text-primary">Scan ›</span>
+            </button>
+          ))}
+          {occurrences.length === 0 && (
+            <p className="text-sm text-muted-foreground">No scheduled dates for this event.</p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-lg px-4 pb-32 pt-4">
       {/* Header */}
       <div className="mb-4">
         <h1 className="text-xl font-bold leading-tight">{eventName || 'Scanner'}</h1>
+        {eventType === 'Series' && (() => {
+          const o = occurrences.find((x) => x.id === occurrenceId);
+          const label = occurrenceLabel || (o ? fmtOcc(o) : 'Selected date');
+          return (
+            <p className="text-sm text-muted-foreground">
+              Date: <span className="font-semibold">{label}</span>
+              {' · '}
+              <button type="button" onClick={changeDate} className="text-primary underline underline-offset-2">Change</button>
+            </p>
+          );
+        })()}
         {gate && (
           <p className="text-sm text-muted-foreground">
             Gate: <span className="font-semibold">{gate}</span>
@@ -453,7 +547,7 @@ export default function ScannerDashboard() {
 
       {/* Actions row */}
       <div className="mb-4 flex gap-2">
-        <Button variant="outline" size="sm" onClick={fetchManifest} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => fetchManifest(occurrenceId)} disabled={loading}>
           ↻ Refresh
         </Button>
         <Button

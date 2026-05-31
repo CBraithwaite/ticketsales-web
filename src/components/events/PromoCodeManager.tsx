@@ -8,6 +8,7 @@ import type { PromoCodeResponse, TierResponse } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateTimePicker } from '@/components/ui/DateTimePicker';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -374,18 +375,20 @@ export default function PromoCodeManager({ eventId, promoCodes: initial, tiers }
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="mb-1">Valid from</Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  clearable
+                  placeholder="Optional"
                   value={form.validFrom}
-                  onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+                  onChange={(v) => setForm({ ...form, validFrom: v })}
                 />
               </div>
               <div>
                 <Label className="mb-1">Valid until</Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
+                  clearable
+                  placeholder="Optional"
                   value={form.validUntil}
-                  onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
+                  onChange={(v) => setForm({ ...form, validUntil: v })}
                 />
               </div>
             </div>

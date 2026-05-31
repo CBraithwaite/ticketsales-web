@@ -21,6 +21,14 @@ interface SaleInfoTier {
   availableInventory: number;
 }
 
+interface SaleOccurrence {
+  id: string;
+  label: string | null;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+}
+
 interface SaleInfoResponse {
   eventId: string;
   eventName: string;
@@ -29,7 +37,17 @@ interface SaleInfoResponse {
   mySalesToday: number;
   myRevenueToday: number;
   currency: string;
+  eventType: 'SingleDate' | 'Series';
+  occurrenceId: string | null;
+  occurrences: SaleOccurrence[] | null;
 }
+
+const fmtOcc = (o: SaleOccurrence) => {
+  const d = new Date(o.startsAt).toLocaleString('en-JM', {
+    timeZone: 'America/Jamaica', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+  return o.label ? `${o.label} · ${d}` : d;
+};
 
 interface DoorSaleTicket {
   id: string;
@@ -68,6 +86,7 @@ export default function ScannerSellPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<DoorSaleResponse | null>(null);
   const [activeQrIndex, setActiveQrIndex] = useState(0);
+  const [occurrenceId, setOccurrenceId] = useState<string | null>(null);
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -76,14 +95,19 @@ export default function ScannerSellPage() {
     }
   }, [status, eventId, router]);
 
-  const fetchInfo = useCallback(async () => {
+  // Reuse the date the scanner already chose (shared with the scan screen).
+  useEffect(() => {
+    const saved = localStorage.getItem(`scanner-occ-${eventId}`);
+    if (saved) setOccurrenceId(saved);
+  }, [eventId]);
+
+  const fetchInfo = useCallback(async (occId: string | null) => {
     if (!session?.accessToken) return;
     setLoadError(null);
     try {
-      const res = await fetch(
-        `${getApiBaseUrl()}/api/v1/scanner/events/${eventId}/sale-info`,
-        { headers: { Authorization: `Bearer ${session.accessToken}` } },
-      );
+      const url = new URL(`${getApiBaseUrl()}/api/v1/scanner/events/${eventId}/sale-info`);
+      if (occId) url.searchParams.set('occurrenceId', occId);
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.accessToken}` } });
       if (!res.ok) {
         if (res.status === 403) setLoadError('You are not authorized to scan this event.');
         else setLoadError(`Failed to load sale info (${res.status}).`);
@@ -97,8 +121,20 @@ export default function ScannerSellPage() {
   }, [eventId, session?.accessToken]);
 
   useEffect(() => {
-    if (session?.accessToken) fetchInfo();
-  }, [session?.accessToken, fetchInfo]);
+    if (session?.accessToken) fetchInfo(occurrenceId);
+  }, [session?.accessToken, occurrenceId, fetchInfo]);
+
+  const chooseOccurrence = useCallback((occId: string) => {
+    localStorage.setItem(`scanner-occ-${eventId}`, occId);
+    setOccurrenceId(occId);
+    setQuantities({});
+  }, [eventId]);
+
+  const changeDate = useCallback(() => {
+    localStorage.removeItem(`scanner-occ-${eventId}`);
+    setOccurrenceId(null);
+    setQuantities({});
+  }, [eventId]);
 
   const setQty = (tierId: string, qty: number) => {
     setQuantities((prev) => {
@@ -160,7 +196,7 @@ export default function ScannerSellPage() {
       setBuyerEmail('');
       setBuyerWhatsApp('');
       setIsComp(false);
-      fetchInfo();
+      fetchInfo(occurrenceId);
     } catch {
       setSubmitError('Network error completing sale.');
     } finally {
@@ -238,7 +274,39 @@ export default function ScannerSellPage() {
     );
   }
 
+  // ---- Series: choose a date before selling ---------------------------------
+  if (info && info.eventType === 'Series' && !occurrenceId) {
+    return (
+      <main className="mx-auto max-w-lg px-4 pb-40 pt-4">
+        <div className="mb-4 flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild className="-ml-2">
+            <Link href={`/scanner/app/${eventId}`}><ArrowLeft className="mr-1 h-4 w-4" /> Scanner</Link>
+          </Button>
+        </div>
+        <h1 className="mb-1 text-xl font-bold leading-tight">{info.eventName}</h1>
+        <p className="mb-4 text-sm text-muted-foreground">Which date are you selling for?</p>
+        <div className="space-y-2">
+          {(info.occurrences ?? []).map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => chooseOccurrence(o.id)}
+              className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted/40"
+            >
+              <span className="text-sm font-medium">{fmtOcc(o)}</span>
+              <span className="text-xs font-semibold text-primary">Sell ›</span>
+            </button>
+          ))}
+          {(info.occurrences ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">No scheduled dates for this event.</p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   // ---- Main UI --------------------------------------------------------------
+  const selectedOcc = info?.occurrences?.find((o) => o.id === occurrenceId) ?? null;
   return (
     <main className="mx-auto max-w-lg px-4 pb-40 pt-4">
       <div className="mb-4 flex items-center gap-2">
@@ -253,6 +321,13 @@ export default function ScannerSellPage() {
       <p className="text-sm text-muted-foreground">
         {isComp ? 'Issuing comp tickets — no charge' : 'Take cash at the door'}
       </p>
+      {info?.eventType === 'Series' && (
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Date: <span className="font-semibold">{selectedOcc ? fmtOcc(selectedOcc) : 'Selected date'}</span>
+          {' · '}
+          <button type="button" onClick={changeDate} className="text-primary underline underline-offset-2">Change</button>
+        </p>
+      )}
 
       {loadError && (
         <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
