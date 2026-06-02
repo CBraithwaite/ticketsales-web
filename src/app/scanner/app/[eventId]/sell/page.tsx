@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import QrCodeImage from '@/components/ui/QrCodeImage';
 import { ArrowLeft, Minus, Plus, Gift, Banknote, Check, Mail, MessageCircle } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface SaleInfoTier {
   id: string;
@@ -43,8 +44,8 @@ interface SaleInfoResponse {
 }
 
 const fmtOcc = (o: SaleOccurrence) => {
-  const d = new Date(o.startsAt).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  const d = new Date(o.startsAt).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
   return o.label ? `${o.label} · ${d}` : d;
 };
@@ -66,7 +67,7 @@ interface DoorSaleResponse {
 }
 
 const fmt = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 export default function ScannerSellPage() {
   const { data: session, status } = useSession();

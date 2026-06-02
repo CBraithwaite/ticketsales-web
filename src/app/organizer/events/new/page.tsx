@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, CalendarPlus } from 'lucide-react';
 
-export const metadata = { title: 'Create event · TicketSales' };
+export const metadata = { title: 'Create event · Choice Stubs' };
 
 export default function NewEventPage() {
   return (

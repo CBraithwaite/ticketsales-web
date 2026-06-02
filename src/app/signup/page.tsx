@@ -3,7 +3,7 @@ import SignupForm from '@/components/auth/SignupForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket, CheckCircle2 } from 'lucide-react';
 
-export const metadata = { title: 'Create account · TicketSales' };
+export const metadata = { title: 'Create account · Choice Stubs' };
 
 interface Props {
   searchParams: { email?: string };
@@ -31,7 +31,7 @@ export default function SignupPage({ searchParams }: Props) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm ring-1 ring-white/20">
               <Ticket className="h-4 w-4" />
             </div>
-            TicketSales
+            Choice Stubs
           </Link>
 
           <div>
@@ -45,7 +45,7 @@ export default function SignupPage({ searchParams }: Props) {
               </span>
             </h2>
             <p className="mt-4 text-sm text-white/65 leading-relaxed max-w-xs">
-              Join thousands of Jamaicans discovering and attending events every week.
+              Join thousands of people discovering and attending events every week.
             </p>
 
             <ul className="mt-8 space-y-3.5">
@@ -58,7 +58,7 @@ export default function SignupPage({ searchParams }: Props) {
             </ul>
           </div>
 
-          <p className="text-xs text-white/35">© {new Date().getFullYear()} TicketSales · Made in Jamaica 🇯🇲</p>
+          <p className="text-xs text-white/35">© {new Date().getFullYear()} Choice Stubs</p>
         </div>
       </div>
 
@@ -68,11 +68,9 @@ export default function SignupPage({ searchParams }: Props) {
 
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-2 font-display font-bold text-base">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-                <Ticket className="h-3.5 w-3.5 text-white" />
-              </div>
-              TicketSales
+            <Link href="/" className="inline-flex items-center" aria-label="Choice Stubs — home">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/choicestubs-logo.svg" alt="Choice Stubs" className="h-8 w-auto" />
             </Link>
           </div>
 

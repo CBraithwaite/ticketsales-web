@@ -8,6 +8,7 @@ import { getApiBaseUrl } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 import {
   ArrowLeft,
   TicketCheck,
@@ -55,11 +56,11 @@ interface LiveStatsResponse {
 const POLL_INTERVAL_MS = 4000;
 
 const fmtMoney = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 const fmtPct = (n: number) => `${Math.round(n * 100)}%`;
 const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('en-JM', {
-    timeZone: 'America/Jamaica',
+  new Date(iso).toLocaleTimeString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -147,7 +148,7 @@ export default function LiveConsolePage() {
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">{ev.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {ev.venueName} · Capacity {ev.capacity.toLocaleString('en-JM')}
+            {ev.venueName} · Capacity {ev.capacity.toLocaleString(DEFAULT_LOCALE)}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -158,7 +159,7 @@ export default function LiveConsolePage() {
           {lastFetch && (
             <>
               <span>·</span>
-              <span>Last {lastFetch.toLocaleTimeString('en-JM', { timeZone: 'America/Jamaica' })}</span>
+              <span>Last {lastFetch.toLocaleTimeString(DEFAULT_LOCALE, { timeZone: DEFAULT_TIMEZONE })}</span>
             </>
           )}
           <Button variant="ghost" size="icon-sm" onClick={fetchStats} aria-label="Refresh now">
@@ -181,9 +182,9 @@ export default function LiveConsolePage() {
               <TicketCheck className="h-3.5 w-3.5" /> Tickets out
             </div>
             <p className="mt-1 text-2xl font-bold tabular-nums">
-              {(totals.soldCount + totals.compCount).toLocaleString('en-JM')}
+              {(totals.soldCount + totals.compCount).toLocaleString(DEFAULT_LOCALE)}
               <span className="text-base font-normal text-muted-foreground">
-                {' / '}{ev.capacity.toLocaleString('en-JM')}
+                {' / '}{ev.capacity.toLocaleString(DEFAULT_LOCALE)}
               </span>
             </p>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-muted">
@@ -193,7 +194,7 @@ export default function LiveConsolePage() {
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {totals.soldCount.toLocaleString('en-JM')} sold + {totals.compCount.toLocaleString('en-JM')} comp
+              {totals.soldCount.toLocaleString(DEFAULT_LOCALE)} sold + {totals.compCount.toLocaleString(DEFAULT_LOCALE)} comp
             </p>
           </CardContent>
         </Card>
@@ -204,7 +205,7 @@ export default function LiveConsolePage() {
               <ScanLine className="h-3.5 w-3.5" /> Scanned
             </div>
             <p className="mt-1 text-2xl font-bold tabular-nums">
-              {totals.scannedCount.toLocaleString('en-JM')}
+              {totals.scannedCount.toLocaleString(DEFAULT_LOCALE)}
               <span className="text-base font-normal text-muted-foreground"> · {fmtPct(scanPct)}</span>
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -238,7 +239,7 @@ export default function LiveConsolePage() {
               {fmtPct(totals.capacityUtilization)}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              {Math.max(0, ev.capacity - totals.soldCount - totals.compCount).toLocaleString('en-JM')} remaining
+              {Math.max(0, ev.capacity - totals.soldCount - totals.compCount).toLocaleString(DEFAULT_LOCALE)} remaining
             </p>
           </CardContent>
         </Card>

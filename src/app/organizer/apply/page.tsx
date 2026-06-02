@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card';
 import { Building2, CheckCircle } from 'lucide-react';
 
-export const metadata = { title: 'Become an organizer · TicketSales' };
+export const metadata = { title: 'Become an organizer · Choice Stubs' };
 
 export default function OrganizerApplyPage() {
   return (
@@ -18,7 +18,7 @@ export default function OrganizerApplyPage() {
           <Building2 className="h-7 w-7 text-primary" />
         </div>
         <h1 className="mt-4 text-2xl font-bold">Become an Organizer</h1>
-        <p className="mt-1 text-sm text-muted-foreground">List events and sell tickets through TicketSales</p>
+        <p className="mt-1 text-sm text-muted-foreground">List events and sell tickets through Choice Stubs</p>
       </div>
       <Card>
         <CardContent className="pt-6">

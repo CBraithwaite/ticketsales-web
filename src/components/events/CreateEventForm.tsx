@@ -17,7 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getApiBaseUrl } from '@/lib/api';
 import {
-  CATEGORIES, CATEGORY_LABELS, PARISHES, PARISH_LABELS,
+  CATEGORIES, CATEGORY_LABELS, COUNTRIES, COUNTRY_LABELS, COUNTRY_DEFAULTS,
 } from '@/types/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
 
-const CURRENCIES = ['JMD', 'USD'] as const;
+const CURRENCIES = ['JMD', 'USD', 'TTD', 'BBD', 'CAD', 'GBP', 'EUR'] as const;
 
 const TierSchema = z
   .object({
@@ -76,7 +76,7 @@ const Schema = z
     description: z.string().min(1, 'Description is required'),
     venueName: z.string().min(2, 'Venue name is required').max(200),
     venueAddress: z.string().min(2, 'Venue address is required').max(500),
-    parish: z.enum(PARISHES),
+    country: z.enum(COUNTRIES),
     ageRestriction: z.string().max(50).or(z.literal('')).optional(),
     dressCode: z.string().max(200).or(z.literal('')).optional(),
     coverImageUrl: z.string().url().or(z.literal('')).optional(),
@@ -179,7 +179,7 @@ export default function CreateEventForm() {
     resolver: zodResolver(Schema),
     defaultValues: {
       category: 'Concert',
-      parish: 'Kingston',
+      country: 'Jamaica',
       eventType: 'SingleDate',
       publishImmediately: false,
       tier: blankTier(),
@@ -270,7 +270,8 @@ export default function CreateEventForm() {
         description: data.description,
         venueName: data.venueName,
         venueAddress: data.venueAddress,
-        parish: data.parish,
+        country: data.country,
+        timeZone: COUNTRY_DEFAULTS[data.country].timeZone,
         ageRestriction: data.ageRestriction || undefined,
         dressCode: data.dressCode || undefined,
         coverImageUrl: data.coverImageUrl || undefined,
@@ -389,19 +390,26 @@ export default function CreateEventForm() {
 
             <FormField
               control={form.control}
-              name="parish"
+              name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Parish</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>Country</FormLabel>
+                  <Select
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      // Default the single-date tier currency to the country's currency.
+                      form.setValue('tier.currency', COUNTRY_DEFAULTS[v as keyof typeof COUNTRY_DEFAULTS].currency);
+                    }}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {PARISHES.map((v) => (
-                        <SelectItem key={v} value={v}>{PARISH_LABELS[v]}</SelectItem>
+                      {COUNTRIES.map((v) => (
+                        <SelectItem key={v} value={v}>{COUNTRY_LABELS[v]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -849,8 +857,9 @@ function TierFields({
               <Select onValueChange={field.onChange} value={field.value as string}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="JMD">JMD</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +41,7 @@ function parse(value: string): Date | null {
 }
 
 const fmtDisplay = (d: Date) =>
-  d.toLocaleString('en-JM', {
+  d.toLocaleString(DEFAULT_LOCALE, {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit',
   });

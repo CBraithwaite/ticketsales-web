@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import QrCodeImage from '@/components/ui/QrCodeImage';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface TransferInfo {
   eventName: string;
@@ -156,7 +157,7 @@ export default function TransferAcceptPage() {
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Offer expires</p>
               <p className="font-medium text-sm mt-0.5">
-                {expiry.toLocaleString('en-JM', { timeZone: 'America/Jamaica' })}
+                {expiry.toLocaleString(DEFAULT_LOCALE, { timeZone: DEFAULT_TIMEZONE })}
               </p>
             </div>
           )}

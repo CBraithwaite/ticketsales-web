@@ -27,6 +27,7 @@ import {
   ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
+import { fmtShort, fmtTime, fmtDateTime, DEFAULT_LOCALE } from '@/lib/datetime';
 import WaitlistButton from './WaitlistButton';
 import type { OccurrenceResponse } from '@/types/api';
 
@@ -34,17 +35,9 @@ interface Props {
   event: EventDetail;
 }
 
-const fmtOccurrence = (startIso: string, endIso: string) => {
-  const opts: Intl.DateTimeFormatOptions = {
-    timeZone: 'America/Jamaica',
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  };
-  const start = new Date(startIso).toLocaleString('en-JM', opts);
-  const end = new Date(endIso).toLocaleString('en-JM', { timeZone: 'America/Jamaica', hour: 'numeric', minute: '2-digit' });
+const fmtOccurrence = (startIso: string, endIso: string, timeZone: string) => {
+  const start = fmtShort(startIso, timeZone);
+  const end = fmtTime(endIso, timeZone);
   return `${start} – ${end}`;
 };
 
@@ -54,7 +47,7 @@ type BankStep = 'form' | 'instructions';
 const FEE_PERCENT = 10;
 
 const fmt = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const BuyerSchema = z.object({
   buyerName: z.string().min(1, 'Name is required'),
@@ -152,7 +145,7 @@ export default function CheckoutPanel({ event }: Props) {
   const filteredOccurrences = scheduledOccurrences.filter((o) => {
     if (onlyAvailable && o.remainingInventory <= 0) return false;
     if (!q) return true;
-    return `${o.label ?? ''} ${fmtOccurrence(o.startsAt, o.endsAt)}`.toLowerCase().includes(q);
+    return `${o.label ?? ''} ${fmtOccurrence(o.startsAt, o.endsAt, event.timeZone)}`.toLowerCase().includes(q);
   });
 
   const occSelectedCount = (o: OccurrenceResponse) =>
@@ -413,7 +406,7 @@ export default function CheckoutPanel({ event }: Props) {
             <p>
               Reservation expires{' '}
               <span className="font-medium text-foreground">
-                {new Date(bankResult.expiresAt).toLocaleString('en-JM', { timeZone: 'America/Jamaica' })}
+                {fmtDateTime(bankResult.expiresAt, event.timeZone)}
               </span>.
               Transfer before this time to secure your tickets.
             </p>
@@ -486,7 +479,7 @@ export default function CheckoutPanel({ event }: Props) {
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">
-                            {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt)}
+                            {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt, event.timeZone)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {soldOut
@@ -532,7 +525,7 @@ export default function CheckoutPanel({ event }: Props) {
                     {selectionByDate.map(({ occ, lines }) => (
                       <div key={occ.id} className="space-y-1">
                         <p className="text-xs font-semibold">
-                          {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt)}
+                          {occ.label ? `${occ.label} · ` : ''}{fmtOccurrence(occ.startsAt, occ.endsAt, event.timeZone)}
                         </p>
                         {lines.map((l, i) => (
                           <div key={i} className="flex justify-between text-xs text-muted-foreground">
@@ -672,7 +665,7 @@ export default function CheckoutPanel({ event }: Props) {
                           />
                         </FormControl>
                         <FormDescription className="text-[11px]">
-                          Jamaican numbers: enter 10 digits. International: include country code digits (e.g. 1876…).
+                          Enter your number with country code (e.g. 1 876 555 0100).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

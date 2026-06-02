@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { authedFetch } from '@/lib/server-fetch';
 import type { OrganizerResponse, EventListItem } from '@/types/api';
+import { DEFAULT_LOCALE, DEFAULT_TIMEZONE } from '@/lib/datetime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle, Wallet } from 'lucide-react';
 
-export const metadata = { title: 'Organizer dashboard · TicketSales' };
+export const metadata = { title: 'Organizer dashboard · Choice Stubs' };
 
 const STATUS_BADGE: Record<EventListItem['status'], string> = {
   Draft: 'bg-neutral-100 text-neutral-700 border-neutral-200',
@@ -145,7 +146,7 @@ export default async function OrganizerDashboard() {
                       <Badge className={STATUS_BADGE[e.status] + ' text-xs shrink-0'}>{e.status}</Badge>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {new Date(e.startsAt).toLocaleString('en-JM', { timeZone: 'America/Jamaica', dateStyle: 'medium', timeStyle: 'short' })}
+                      {new Date(e.startsAt).toLocaleString(DEFAULT_LOCALE, { timeZone: e.timeZone || DEFAULT_TIMEZONE, dateStyle: 'medium', timeStyle: 'short' })}
                       {' · '}{e.venueName}
                     </p>
                     <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
