@@ -1,35 +1,20 @@
 import Link from 'next/link';
 import type { EventListItem } from '@/types/api';
-import { CATEGORY_LABELS, PARISH_LABELS } from '@/types/api';
+import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock } from 'lucide-react';
-
-const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-const fmtDay = (iso: string) => {
-  const d = new Date(iso);
-  return {
-    day: d.toLocaleString('en-JM', { timeZone: 'America/Jamaica', day: 'numeric' }),
-    month: d.toLocaleString('en-JM', { timeZone: 'America/Jamaica', month: 'short' }).toUpperCase(),
-    weekday: d.toLocaleString('en-JM', { timeZone: 'America/Jamaica', weekday: 'short' }),
-  };
-};
+import { fmtTime, dayParts, DEFAULT_LOCALE } from '@/lib/datetime';
 
 const fmtMoney = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 export default function EventCard({ event }: { event: EventListItem }) {
   const soldOut = event.remainingInventory === 0;
   const limited = !soldOut && event.remainingInventory > 0 &&
     event.remainingInventory <= Math.max(10, event.totalInventory * 0.1);
   const cat = (CATEGORY_LABELS as Record<string, string>)[event.category] ?? event.category;
-  const parish = (PARISH_LABELS as Record<string, string>)[event.parish] ?? event.parish;
-  const date = fmtDay(event.startsAt);
+  const country = (COUNTRY_LABELS as Record<string, string>)[event.country] ?? event.country;
+  const date = dayParts(event.startsAt, event.timeZone);
   const isSeries = event.type === 'Series';
 
   return (
@@ -94,11 +79,11 @@ export default function EventCard({ event }: { event: EventListItem }) {
         <div className="mt-2 flex flex-col gap-1">
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3 w-3 shrink-0" />
-            {date.weekday}, {date.month} {date.day} · {fmtTime(event.startsAt)}
+            {date.weekday}, {date.month} {date.day} · {fmtTime(event.startsAt, event.timeZone)}
           </span>
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">{event.venueName}, {parish}</span>
+            <span className="truncate">{event.venueName}, {country}</span>
           </span>
         </div>
 

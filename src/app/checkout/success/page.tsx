@@ -12,12 +12,14 @@ import { Button } from '@/components/ui/button';
 import QrCodeImage from '@/components/ui/QrCodeImage';
 import { CheckCircle2, Loader2, CalendarDays, MapPin, Ticket, Mail } from 'lucide-react';
 
-const fmt = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+const fmt = (amount: number, currency: string) =>
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const fmtDate = (iso: string, timeZone: string) =>
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -180,7 +182,7 @@ function SuccessContent() {
           <div className="mt-3 space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 shrink-0" />
-              <span>{fmtDate(order.event.startsAt)}</span>
+              <span>{fmtDate(order.event.startsAt, order.event.timeZone)}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 shrink-0" />

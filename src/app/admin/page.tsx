@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, AlertCircle, Inbox } from 'lucide-react';
 
-export const metadata = { title: 'Admin · TicketSales' };
+export const metadata = { title: 'Admin · Choice Stubs' };
 
 interface AdminOrganizer {
   id: string;

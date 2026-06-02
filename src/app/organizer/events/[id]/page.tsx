@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { notFound, redirect } from 'next/navigation';
 import { authedFetch } from '@/lib/server-fetch';
 import type { EventDetail } from '@/types/api';
-import { CATEGORY_LABELS, PARISH_LABELS } from '@/types/api';
+import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import TierManager from '@/components/events/TierManager';
 import OccurrenceManager from '@/components/events/OccurrenceManager';
 import PromoCodeManager from '@/components/events/PromoCodeManager';
@@ -21,11 +22,11 @@ interface Props {
   params: { id: string };
 }
 
-export const metadata = { title: 'Manage event · TicketSales' };
+export const metadata = { title: 'Manage event · Choice Stubs' };
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+const fmtDate = (iso: string, timeZone: string) =>
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -81,7 +82,7 @@ export default async function ManageEventPage({ params }: Props) {
   const refunds = refundsRes.ok ? await refundsRes.json() : [];
 
   const cat = (CATEGORY_LABELS as Record<string, string>)[ev.category] ?? ev.category;
-  const parish = (PARISH_LABELS as Record<string, string>)[ev.parish] ?? ev.parish;
+  const country = (COUNTRY_LABELS as Record<string, string>)[ev.country] ?? ev.country;
 
   const isSeries = ev.type === 'Series';
   // For series, tiers live under occurrences; flatten them for summaries and tier-scoped managers.
@@ -108,12 +109,12 @@ export default async function ManageEventPage({ params }: Props) {
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {cat} · {parish} · {ev.venueName}
+                {cat} · {country} · {ev.venueName}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {isSeries
                   ? `Series · ${(ev.occurrences ?? []).length} dates`
-                  : `${fmtDate(ev.startsAt)} — ${fmtDate(ev.endsAt)}`}
+                  : `${fmtDate(ev.startsAt, ev.timeZone)} — ${fmtDate(ev.endsAt, ev.timeZone)}`}
               </p>
             </div>
             {ev.status === 'Published' && (

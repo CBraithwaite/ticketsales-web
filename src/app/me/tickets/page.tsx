@@ -12,6 +12,7 @@ import QrCodeImage from '@/components/ui/QrCodeImage';
 import TransferModal from '@/components/tickets/TransferModal';
 import RefundModal from '@/components/tickets/RefundModal';
 import { CalendarDays, MapPin, Loader2, Ticket } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface MyTicket {
   id: string;
@@ -31,8 +32,8 @@ interface MyTicket {
 }
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -223,8 +224,8 @@ function TicketCard({
           <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-              {new Date(ticket.order.eventStartsAt).toLocaleString('en-JM', {
-                timeZone: 'America/Jamaica',
+              {new Date(ticket.order.eventStartsAt).toLocaleString(DEFAULT_LOCALE, {
+                timeZone: DEFAULT_TIMEZONE,
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',

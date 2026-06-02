@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { getApiBaseUrl } from '@/lib/api';
-import type { TierResponse } from '@/types/api';
+import type { TierResponse, Currency } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +21,7 @@ interface TierFormData {
   name: string;
   description: string;
   priceAmount: number;
-  currency: 'JMD' | 'USD';
+  currency: Currency;
   inventoryTotal: number;
   minPerOrder: number;
   maxPerOrder: number;
@@ -171,7 +172,7 @@ export default function TierManager({ eventId, tiers: initialTiers }: Props) {
     });
 
   const fmtMoney = (amount: number, currency: string) =>
-    `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
+    `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
 
   return (
     <section className="mt-8">
@@ -286,11 +287,12 @@ export default function TierManager({ eventId, tiers: initialTiers }: Props) {
                 <Label className="mb-1">Currency</Label>
                 <select
                   value={form.currency}
-                  onChange={(e) => setForm({ ...form, currency: e.target.value as 'JMD' | 'USD' })}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="JMD">JMD</option>
-                  <option value="USD">USD</option>
+                  {(['JMD', 'USD', 'TTD', 'BBD', 'CAD', 'GBP', 'EUR'] as Currency[]).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
               </div>
               <div>

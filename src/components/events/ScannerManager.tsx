@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { getApiBaseUrl } from '@/lib/api';
@@ -242,9 +243,9 @@ export default function ScannerManager({ eventId, scanners: initial }: Props) {
                 </p>
                 <p className="text-xs text-neutral-400">
                   {s.status === 'Accepted'
-                    ? `Accepted ${new Date(s.acceptedAt!).toLocaleDateString('en-JM')}`
+                    ? `Accepted ${new Date(s.acceptedAt!).toLocaleDateString(DEFAULT_LOCALE)}`
                     : s.status === 'Pending'
-                      ? `Expires ${new Date(s.expiresAt).toLocaleDateString('en-JM')}`
+                      ? `Expires ${new Date(s.expiresAt).toLocaleDateString(DEFAULT_LOCALE)}`
                       : ''}
                 </p>
               </div>

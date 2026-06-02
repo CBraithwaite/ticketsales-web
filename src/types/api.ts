@@ -19,12 +19,14 @@ export interface OrganizerResponse {
 
 export type EventType = 'SingleDate' | 'Series';
 
+export type Currency = 'JMD' | 'USD' | 'TTD' | 'BBD' | 'CAD' | 'GBP' | 'EUR';
+
 export interface TierResponse {
   id: string;
   name: string;
   description: string | null;
   priceAmount: number;
-  currency: 'JMD' | 'USD';
+  currency: Currency;
   inventoryTotal: number;
   inventorySold: number;
   inventoryReserved: number;
@@ -50,7 +52,7 @@ export interface OccurrenceResponse {
   tiers: TierResponse[];
   remainingInventory: number;
   lowestPriceAmount: number;
-  lowestPriceCurrency: 'JMD' | 'USD';
+  lowestPriceCurrency: Currency;
 }
 
 export interface EventListItem {
@@ -59,15 +61,16 @@ export interface EventListItem {
   name: string;
   category: string;
   status: 'Draft' | 'Published' | 'Unlisted' | 'Cancelled' | 'Completed';
-  parish: string;
+  country: string;
   venueName: string;
   startsAt: string;
   endsAt: string;
   coverImageUrl: string | null;
   lowestPriceAmount: number;
-  lowestPriceCurrency: 'JMD' | 'USD';
+  lowestPriceCurrency: Currency;
   totalInventory: number;
   remainingInventory: number;
+  timeZone: string;
   type: EventType;
   occurrenceCount: number;
 }
@@ -79,7 +82,7 @@ export interface EventDetail {
   category: string;
   description: string;
   status: EventListItem['status'];
-  parish: string;
+  country: string;
   venueName: string;
   venueAddress: string;
   startsAt: string;
@@ -109,38 +112,34 @@ export interface OrganizerRefundSummary {
 }
 
 /** Constants matching backend enums (order matters where it matters). */
-export const PARISHES = [
-  'Kingston',
-  'StAndrew',
-  'StCatherine',
-  'Clarendon',
-  'Manchester',
-  'StElizabeth',
-  'Westmoreland',
-  'Hanover',
-  'StJames',
-  'Trelawny',
-  'StAnn',
-  'StMary',
-  'Portland',
-  'StThomas',
+export const COUNTRIES = [
+  'Jamaica',
+  'TrinidadAndTobago',
+  'Barbados',
+  'UnitedStates',
+  'Canada',
+  'UnitedKingdom',
 ] as const;
 
-export const PARISH_LABELS: Record<typeof PARISHES[number], string> = {
-  Kingston: 'Kingston',
-  StAndrew: 'St. Andrew',
-  StCatherine: 'St. Catherine',
-  Clarendon: 'Clarendon',
-  Manchester: 'Manchester',
-  StElizabeth: 'St. Elizabeth',
-  Westmoreland: 'Westmoreland',
-  Hanover: 'Hanover',
-  StJames: 'St. James',
-  Trelawny: 'Trelawny',
-  StAnn: 'St. Ann',
-  StMary: 'St. Mary',
-  Portland: 'Portland',
-  StThomas: 'St. Thomas',
+export type Country = typeof COUNTRIES[number];
+
+export const COUNTRY_LABELS: Record<Country, string> = {
+  Jamaica: 'Jamaica',
+  TrinidadAndTobago: 'Trinidad & Tobago',
+  Barbados: 'Barbados',
+  UnitedStates: 'United States',
+  Canada: 'Canada',
+  UnitedKingdom: 'United Kingdom',
+};
+
+/** Default currency + IANA time zone per country (mirrors backend CountryDefaults). */
+export const COUNTRY_DEFAULTS: Record<Country, { currency: 'JMD' | 'USD' | 'TTD' | 'BBD' | 'CAD' | 'GBP'; timeZone: string }> = {
+  Jamaica: { currency: 'JMD', timeZone: 'America/Jamaica' },
+  TrinidadAndTobago: { currency: 'TTD', timeZone: 'America/Port_of_Spain' },
+  Barbados: { currency: 'BBD', timeZone: 'America/Barbados' },
+  UnitedStates: { currency: 'USD', timeZone: 'America/New_York' },
+  Canada: { currency: 'CAD', timeZone: 'America/Toronto' },
+  UnitedKingdom: { currency: 'GBP', timeZone: 'Europe/London' },
 };
 
 export const CATEGORIES = [
@@ -187,7 +186,7 @@ export interface OrderSummary {
   paidAt: string | null;
   buyerEmail: string;
   buyerName: string;
-  event: { id: string; slug: string; name: string; startsAt: string; venueName: string };
+  event: { id: string; slug: string; name: string; startsAt: string; venueName: string; timeZone: string };
   tickets: TicketBrief[];
 }
 

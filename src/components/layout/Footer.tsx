@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import { Ticket } from 'lucide-react';
 
 const LINKS = {
   Discover: [
     { label: 'Browse Events', href: '/' },
-    { label: 'Kingston', href: '/?parish=Kingston' },
-    { label: 'Montego Bay', href: '/?parish=StJames' },
-    { label: 'Negril', href: '/?parish=Westmoreland' },
+    { label: 'Jamaica', href: '/?country=Jamaica' },
+    { label: 'Trinidad & Tobago', href: '/?country=TrinidadAndTobago' },
+    { label: 'Barbados', href: '/?country=Barbados' },
   ],
   Organizers: [
     { label: 'Sell Tickets', href: '/organizer/apply' },
@@ -32,16 +31,13 @@ export default function Footer() {
 
           {/* Brand */}
           <div className="col-span-2 sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2.5 font-display font-bold text-base tracking-tight">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-brand shadow-sm">
-                <Ticket className="h-4 w-4 text-white" />
-              </div>
-              Ticket<span className="text-primary">Sales</span>
+            <Link href="/" className="inline-flex items-center" aria-label="Choice Stubs — home">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/choicestubs-logo.svg" alt="Choice Stubs" className="h-10 w-auto" />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-[200px]">
-              Jamaica&apos;s home for live events — from Kingston dancehall to Negril beach festivals.
+              Your home for live events — discover, sell, and scan tickets anywhere.
             </p>
-            <p className="mt-4 text-xs font-medium text-muted-foreground">🇯🇲 Made in Jamaica</p>
           </div>
 
           {/* Link columns */}
@@ -69,7 +65,7 @@ export default function Footer() {
         {/* Divider + bottom row */}
         <div className="mt-10 border-t border-border/60 pt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} TicketSales Ltd. All rights reserved.
+            © {new Date().getFullYear()} Choice Stubs Ltd. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             GCT (15%) applied where applicable · Prices in JMD unless stated

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,10 +19,10 @@ import type { AdminPayoutItem, AdminBankTransferOrderItem } from '@/types/api';
 import { getApiBaseUrl } from '@/lib/api';
 
 const fmt = (n: number, currency: string) =>
-  `${currency} ${n.toLocaleString('en-JM', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `${currency} ${n.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-JM', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  new Date(iso).toLocaleDateString(DEFAULT_LOCALE, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 export default function AdminPayoutsPage() {
   const { data: session } = useSession();

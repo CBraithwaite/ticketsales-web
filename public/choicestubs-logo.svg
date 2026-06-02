@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 10 332 70" role="img" aria-label="Choice Stubs">
+  <defs>
+    <linearGradient id="csRed" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14B866"/>
+      <stop offset="1" stop-color="#0B8443"/>
+    </linearGradient>
+    <!-- ticket tile with perforation notches punched on left/right edges -->
+    <mask id="csTicket">
+      <rect x="10" y="14" width="60" height="60" rx="16" fill="#fff"/>
+      <circle cx="10" cy="44" r="6" fill="#000"/>
+      <circle cx="70" cy="44" r="6" fill="#000"/>
+    </mask>
+  </defs>
+
+  <!-- Icon -->
+  <g mask="url(#csTicket)">
+    <rect x="10" y="14" width="60" height="60" rx="16" fill="url(#csRed)"/>
+    <!-- perforation line -->
+    <line x1="40" y1="20" x2="40" y2="68" stroke="#fff" stroke-opacity="0.28" stroke-width="2.5"
+          stroke-linecap="round" stroke-dasharray="0.5 6"/>
+  </g>
+  <!-- check mark (the "choice") -->
+  <path d="M26 45 L36 55 L55 33" fill="none" stroke="#F7F1E7" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Wordmark -->
+  <g font-family="'Plus Jakarta Sans','Segoe UI',system-ui,-apple-system,Arial,sans-serif">
+    <text x="90" y="49" font-size="34" font-weight="800" letter-spacing="-0.5" fill="#15181F">Choice<tspan fill="#0B8443"> Stubs</tspan></text>
+    <text x="92" y="68" font-size="10.5" font-weight="600" letter-spacing="3.5" fill="#97A0AB">EVENT TICKETING</text>
+  </g>
+</svg>

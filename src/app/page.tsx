@@ -45,7 +45,7 @@ export default async function Home() {
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-subtle" />
-              Jamaica&apos;s #1 Event Platform
+              Your #1 Event Platform
             </div>
 
             {/* Headline */}
@@ -59,7 +59,7 @@ export default async function Home() {
               >
                 Amazing Events
               </span>
-              {' '}Across Jamaica
+              {' '}Near You
             </h1>
 
             <p className="mt-2 text-sm text-white/70 sm:text-base max-w-xl leading-relaxed">
@@ -94,7 +94,7 @@ export default async function Home() {
             <div className="mt-4 flex flex-wrap gap-5 animate-fade-in-up-delay-2">
               {[
                 { value: `${events.length}+`, label: 'Live Events' },
-                { value: '14', label: 'Parishes' },
+                { value: 'Secure', label: 'Card & cash payments' },
                 { value: '2s', label: 'Gate scan time' },
               ].map((stat) => (
                 <div key={stat.label} className="flex flex-col">
@@ -177,7 +177,7 @@ export default async function Home() {
               <p className="mt-1 text-sm text-muted-foreground max-w-xs mx-auto">
                 {eventsError
                   ? `Could not load events: ${eventsError}`
-                  : 'Check back soon for exciting events across Jamaica!'}
+                  : 'Check back soon for exciting events near you!'}
               </p>
             </div>
             {isAuthed && (
@@ -205,7 +205,7 @@ export default async function Home() {
                   Ready to host your own event?
                 </h2>
                 <p className="mt-3 text-white/70 max-w-md mx-auto text-sm sm:text-base">
-                  Join TicketSales and reach thousands of event-goers across Jamaica.
+                  Join Choice Stubs and reach thousands of event-goers.
                   Set up, sell, and scan — all in one place.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3 justify-center">

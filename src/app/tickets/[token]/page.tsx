@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DEFAULT_LOCALE } from '@/lib/datetime';
 import { useParams } from 'next/navigation';
 import { getApiBaseUrl } from '@/lib/api';
 import QrCodeImage from '@/components/ui/QrCodeImage';
@@ -26,7 +27,7 @@ interface TicketViewResponse {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-JM', {
+  return new Date(iso).toLocaleDateString(DEFAULT_LOCALE, {
     weekday: 'short',
     day: 'numeric',
     month: 'long',

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Phone, IdCard } from 'lucide-react';
 
-export const metadata = { title: 'My account · TicketSales' };
+export const metadata = { title: 'My account · Choice Stubs' };
 
 interface MeResponse {
   id: string;

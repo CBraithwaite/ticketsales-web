@@ -15,16 +15,16 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'TicketSales — Jamaica Event Tickets',
+  title: 'Choice Stubs — Event Tickets',
   description:
-    'Find and book tickets for concerts, dancehall parties, stage shows, and festivals across Jamaica.',
+    'Find and book tickets for concerts, parties, stage shows, and festivals near you.',
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-JM" className={cn(dmSans.variable, jakarta.variable)}>
+    <html lang="en" className={cn(dmSans.variable, jakarta.variable)}>
       <body className="flex min-h-screen flex-col font-sans">
         <Providers>
           <Navbar />

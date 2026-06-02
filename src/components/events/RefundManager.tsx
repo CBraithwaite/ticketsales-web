@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Props {
   eventId: string;
@@ -25,8 +26,8 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+  return new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -36,7 +37,7 @@ function fmtDate(iso: string) {
 }
 
 function fmtMoney(amount: number, currency: string) {
-  return `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: 2 })}`;
+  return `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 2 })}`;
 }
 
 export default function RefundManager({ eventId, refunds: initial }: Props) {

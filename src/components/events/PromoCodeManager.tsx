@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Props {
   eventId: string;
@@ -181,11 +182,11 @@ export default function PromoCodeManager({ eventId, promoCodes: initial, tiers }
   const fmtDiscount = (p: PromoCodeResponse) =>
     p.discountType === 'Percentage'
       ? `${p.discountValue}%`
-      : `${p.discountCurrency ?? 'JMD'} ${p.discountValue.toLocaleString('en-JM')} off`;
+      : `${p.discountCurrency ?? 'JMD'} ${p.discountValue.toLocaleString(DEFAULT_LOCALE)} off`;
 
   const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString('en-JM', {
-      timeZone: 'America/Jamaica',
+    new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+      timeZone: DEFAULT_TIMEZONE,
       month: 'short',
       day: 'numeric',
       year: 'numeric',

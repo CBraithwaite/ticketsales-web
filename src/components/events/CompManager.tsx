@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Gift, Mail, MessageCircle, Plus, X, Check, ExternalLink } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Tier {
   id: string;
@@ -45,8 +46,8 @@ interface Props {
 }
 
 const fmt = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     month: 'short',
     day: 'numeric',
     hour: 'numeric',

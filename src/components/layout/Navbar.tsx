@@ -57,18 +57,12 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 font-display font-bold text-[17px] tracking-tight">
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg gradient-brand shadow-sm">
-            <Ticket className="h-4 w-4 text-white" />
-            {/* Gold accent dot */}
-            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-accent ring-2 ring-background" />
-          </div>
-          <span className="hidden sm:inline">
-            Ticket<span className="text-primary">Sales</span>
-          </span>
+        <Link href="/" className="flex items-center" aria-label="Choice Stubs — home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/choicestubs-logo.svg" alt="Choice Stubs" className="h-14 w-auto" />
         </Link>
 
         {/* Desktop nav links */}
@@ -165,11 +159,9 @@ export default function Navbar() {
           </SheetTrigger>
           <SheetContent side="right" className="w-72 pt-8">
             <SheetHeader className="text-left mb-6">
-              <SheetTitle className="flex items-center gap-2 font-display text-base">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-brand">
-                  <Ticket className="h-3.5 w-3.5 text-white" />
-                </div>
-                TicketSales
+              <SheetTitle className="flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/choicestubs-logo.svg" alt="Choice Stubs" className="h-8 w-auto" />
               </SheetTitle>
             </SheetHeader>
 

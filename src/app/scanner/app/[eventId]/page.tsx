@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 import {
   type ManifestTicket,
   type PendingScan,
@@ -46,8 +47,8 @@ interface ManifestResponse {
 }
 
 const fmtOcc = (o: ManifestOccurrence) => {
-  const d = new Date(o.startsAt).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  const d = new Date(o.startsAt).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
   return o.label ? `${o.label} · ${d}` : d;
 };
@@ -138,7 +139,7 @@ export default function ScannerDashboard() {
       }
 
       setTickets(data.tickets);
-      setLastRefresh(new Date().toLocaleTimeString('en-JM', { timeZone: 'America/Jamaica' }));
+      setLastRefresh(new Date().toLocaleTimeString(DEFAULT_LOCALE, { timeZone: DEFAULT_TIMEZONE }));
       await saveManifest(eventId, data.tickets, occId);
     } catch {
       const cached = await getManifest(eventId);
@@ -637,8 +638,8 @@ export default function ScannerDashboard() {
                     {s.result === 'valid' ? '✓' : '✕'}
                   </Badge>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(s.scannedAt).toLocaleTimeString('en-JM', {
-                      timeZone: 'America/Jamaica',
+                    {new Date(s.scannedAt).toLocaleTimeString(DEFAULT_LOCALE, {
+                      timeZone: DEFAULT_TIMEZONE,
                       hour: 'numeric',
                       minute: '2-digit',
                     })}

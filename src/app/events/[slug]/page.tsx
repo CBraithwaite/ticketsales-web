@@ -2,32 +2,20 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getApiBaseUrl } from '@/lib/api';
 import type { EventDetail } from '@/types/api';
-import { CATEGORY_LABELS, PARISH_LABELS } from '@/types/api';
+import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Shirt, ArrowLeft } from 'lucide-react';
 import CheckoutPanel from '@/components/checkout/CheckoutPanel';
+import { fmtRange, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Props {
   params: { slug: string };
 }
 
-const fmtDateRange = (startIso: string, endIso: string) => {
-  const opts: Intl.DateTimeFormatOptions = {
-    timeZone: 'America/Jamaica',
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  };
-  return `${new Date(startIso).toLocaleString('en-JM', opts)} — ${new Date(endIso).toLocaleString('en-JM', opts)}`;
-};
-
 const fmtMoney = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
 
 async function fetchEvent(slug: string): Promise<EventDetail | null> {
   const res = await fetch(`${getApiBaseUrl()}/api/v1/events/${encodeURIComponent(slug)}`, {
@@ -40,9 +28,9 @@ async function fetchEvent(slug: string): Promise<EventDetail | null> {
 
 export async function generateMetadata({ params }: Props) {
   const ev = await fetchEvent(params.slug).catch(() => null);
-  if (!ev) return { title: 'Event not found · TicketSales' };
+  if (!ev) return { title: 'Event not found · Choice Stubs' };
   return {
-    title: `${ev.name} · TicketSales`,
+    title: `${ev.name} · Choice Stubs`,
     description: ev.description.slice(0, 160),
   };
 }
@@ -52,7 +40,7 @@ export default async function EventDetailPage({ params }: Props) {
   if (!ev) notFound();
 
   const cat = (CATEGORY_LABELS as Record<string, string>)[ev.category] ?? ev.category;
-  const parish = (PARISH_LABELS as Record<string, string>)[ev.parish] ?? ev.parish;
+  const country = (COUNTRY_LABELS as Record<string, string>)[ev.country] ?? ev.country;
 
   return (
     <div className="pb-16">
@@ -108,12 +96,12 @@ export default async function EventDetailPage({ params }: Props) {
                           {ev.occurrences?.length ?? 0} dates · choose your date when getting tickets
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {fmtDateRange(ev.startsAt, ev.endsAt)}
+                          {fmtRange(ev.startsAt, ev.endsAt, ev.timeZone)}
                         </p>
                       </>
                     ) : (
                       <>
-                        <p className="mt-0.5 text-sm font-medium">{fmtDateRange(ev.startsAt, ev.endsAt)}</p>
+                        <p className="mt-0.5 text-sm font-medium">{fmtRange(ev.startsAt, ev.endsAt, ev.timeZone)}</p>
                         <p className="text-xs text-muted-foreground">{ev.timeZone}</p>
                       </>
                     )}
@@ -128,7 +116,7 @@ export default async function EventDetailPage({ params }: Props) {
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Where</p>
                     <p className="mt-0.5 text-sm font-medium">{ev.venueName}</p>
-                    <p className="text-xs text-muted-foreground">{ev.venueAddress}, {parish}</p>
+                    <p className="text-xs text-muted-foreground">{ev.venueAddress}, {country}</p>
                   </div>
                 </CardContent>
               </Card>

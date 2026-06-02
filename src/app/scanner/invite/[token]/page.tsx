@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface InviteInfo {
   name: string;
@@ -78,8 +79,8 @@ export default function AcceptInvitePage({ params }: { params: { token: string }
     });
 
   const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString('en-JM', {
-      timeZone: 'America/Jamaica',
+    new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+      timeZone: DEFAULT_TIMEZONE,
       weekday: 'long',
       month: 'long',
       day: 'numeric',

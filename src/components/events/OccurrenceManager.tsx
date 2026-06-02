@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Props {
   eventId: string;
@@ -58,8 +59,8 @@ async function extractError(res: Response): Promise<string> {
 }
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -68,7 +69,7 @@ const fmtDate = (iso: string) =>
   });
 
 const fmtMoney = (amount: number, currency: string) =>
-  `${currency} ${amount.toLocaleString('en-JM', { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
+  `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: amount % 1 === 0 ? 0 : 2 })}`;
 
 export default function OccurrenceManager({ eventId, occurrences: initial }: Props) {
   const router = useRouter();

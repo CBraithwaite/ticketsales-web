@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle2, XCircle, Loader2, Building2, Mail, Phone, Hash, Clock } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface AdminOrganizer {
   id: string;
@@ -27,8 +28,8 @@ interface Props {
 }
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('en-JM', {
-    timeZone: 'America/Jamaica',
+  new Date(iso).toLocaleString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
     month: 'short',
     day: 'numeric',
     year: 'numeric',
