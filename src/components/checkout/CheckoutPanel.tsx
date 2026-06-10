@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { EventDetail, TierResponse, BankTransferReserveResponse } from '@/types/api';
+import type { EventDetail, TierResponse, BankTransferReserveResponse, PaymentMethods } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,13 +27,22 @@ import {
   ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
+import { estimateFeeParts, FEE_PERCENT } from '@/lib/fees';
 import { fmtShort, fmtTime, fmtDateTime, DEFAULT_LOCALE } from '@/lib/datetime';
 import WaitlistButton from './WaitlistButton';
 import type { OccurrenceResponse } from '@/types/api';
 
 interface Props {
   event: EventDetail;
+  /** Which payment methods the server has enabled. Omitted = assume all (back-compat). */
+  methods?: PaymentMethods;
 }
+
+const METHOD_META = {
+  card: { label: 'Card', Icon: CreditCard },
+  wipay: { label: 'WiPay', Icon: Wallet },
+  bank: { label: 'Bank', Icon: Building2 },
+} as const;
 
 const fmtOccurrence = (startIso: string, endIso: string, timeZone: string) => {
   const start = fmtShort(startIso, timeZone);
@@ -43,8 +52,6 @@ const fmtOccurrence = (startIso: string, endIso: string, timeZone: string) => {
 
 type PaymentMethod = 'card' | 'wipay' | 'bank';
 type BankStep = 'form' | 'instructions';
-
-const FEE_PERCENT = 10;
 
 const fmt = (amount: number, currency: string) =>
   `${currency} ${amount.toLocaleString(DEFAULT_LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -72,13 +79,22 @@ const normalizePhone = (p: string): string => {
   return p.trim();
 };
 
-export default function CheckoutPanel({ event }: Props) {
+export default function CheckoutPanel({ event, methods }: Props) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isAuthed = status === 'authenticated';
 
+  // Only offer payment methods the server actually has configured. If the prop
+  // is missing, assume all are available (keeps older callers working).
+  const enabledMethods = methods ?? { card: true, wiPay: true, bank: true };
+  const availableMethods = ([
+    enabledMethods.card && 'card',
+    enabledMethods.wiPay && 'wipay',
+    enabledMethods.bank && 'bank',
+  ].filter(Boolean) as PaymentMethod[]);
+
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(availableMethods[0] ?? 'card');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bankResult, setBankResult] = useState<BankTransferReserveResponse | null>(null);
@@ -134,8 +150,8 @@ export default function CheckoutPanel({ event }: Props) {
       : (allTiers[0]?.currency ?? 'JMD');
 
   const subtotal = allTiers.reduce((sum, tier) => sum + tier.priceAmount * (quantities[tier.id] ?? 0), 0);
-  const fees = Math.round(subtotal * (FEE_PERCENT / 100) * 100) / 100;
-  const total = subtotal + fees;
+  const feeParts = estimateFeeParts(subtotal, totalTickets, currency);
+  const total = subtotal + feeParts.total;
 
   // Series: upcoming, still-scheduled dates only (past dates can't be bought).
   const scheduledOccurrences: OccurrenceResponse[] = isSeries
@@ -544,55 +560,50 @@ export default function CheckoutPanel({ event }: Props) {
                     <span>Subtotal ({totalTickets} ticket{totalTickets !== 1 ? 's' : ''})</span>
                     <span>{fmt(subtotal, currency)}</span>
                   </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Service fee ({FEE_PERCENT}%)</span>
-                    <span>{fmt(fees, currency)}</span>
-                  </div>
+                  {feeParts.processing > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Credit card processing ({FEE_PERCENT}%)</span>
+                      <span>{fmt(feeParts.processing, currency)}</span>
+                    </div>
+                  )}
+                  {feeParts.service > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Service fee</span>
+                      <span>{fmt(feeParts.service, currency)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-semibold border-t pt-1.5 mt-1">
                     <span>Total</span>
                     <span>{fmt(total, currency)}</span>
                   </div>
                 </div>
 
-                {/* Payment method toggle */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
-                      paymentMethod === 'card'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border text-muted-foreground hover:border-foreground/30'
-                    }`}
+                {/* Payment method toggle — only shown when more than one is available */}
+                {availableMethods.length > 1 && (
+                  <div
+                    className="grid gap-2"
+                    style={{ gridTemplateColumns: `repeat(${availableMethods.length}, minmax(0, 1fr))` }}
                   >
-                    <CreditCard className="h-4 w-4" />
-                    Card
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('wipay')}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
-                      paymentMethod === 'wipay'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border text-muted-foreground hover:border-foreground/30'
-                    }`}
-                  >
-                    <Wallet className="h-4 w-4" />
-                    WiPay
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('bank')}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
-                      paymentMethod === 'bank'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border text-muted-foreground hover:border-foreground/30'
-                    }`}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    Bank
-                  </button>
-                </div>
+                    {availableMethods.map((m) => {
+                      const { label, Icon } = METHOD_META[m];
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setPaymentMethod(m)}
+                          className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-sm font-medium transition-colors ${
+                            paymentMethod === m
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-border text-muted-foreground hover:border-foreground/30'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {paymentMethod === 'wipay' && (
                   <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-xs text-green-800">

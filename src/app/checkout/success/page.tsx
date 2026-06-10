@@ -10,7 +10,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import QrCodeImage from '@/components/ui/QrCodeImage';
-import { CheckCircle2, Loader2, CalendarDays, MapPin, Ticket, Mail } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  CheckCircle2, Loader2, CalendarDays, MapPin, Ticket, Mail, MessageCircle, Copy, Send,
+} from 'lucide-react';
 
 import { DEFAULT_LOCALE } from '@/lib/datetime';
 
@@ -41,15 +44,27 @@ function SuccessContent() {
   const [timedOut, setTimedOut] = useState(false);
   const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [emailMsg, setEmailMsg] = useState<string | null>(null);
+  const [emailTo, setEmailTo] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const emailTickets = useCallback(async () => {
     if (!orderNumber || !token) return;
+    const to = emailTo.trim().toLowerCase();
+    if (!to || !to.includes('@')) {
+      setEmailState('error');
+      setEmailMsg('Enter a valid email address.');
+      return;
+    }
     setEmailState('sending');
     setEmailMsg(null);
     try {
       const res = await fetch(
         `${getApiBaseUrl()}/api/v1/orders/${encodeURIComponent(orderNumber)}/email-tickets?token=${encodeURIComponent(token)}`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: to }),
+        },
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -64,7 +79,7 @@ function SuccessContent() {
       setEmailState('error');
       setEmailMsg('Network error. Please try again.');
     }
-  }, [orderNumber, token]);
+  }, [orderNumber, token, emailTo]);
 
   const fetchOrder = useCallback(async () => {
     if (!orderNumber || !token) {
@@ -82,6 +97,7 @@ function SuccessContent() {
       }
       const data = (await res.json()) as OrderSummary;
       setOrder(data);
+      setEmailTo((prev) => prev || data.buyerEmail);
     } catch {
       setError('Could not load order. Check your internet connection and refresh.');
     }
@@ -227,6 +243,7 @@ function SuccessContent() {
                   <p className="text-xs text-muted-foreground font-mono break-all">
                     {ticket.id.slice(0, 8).toUpperCase()}
                   </p>
+                  <TicketSendInline ticketId={ticket.id} token={token} />
                 </div>
               </div>
             </CardContent>
@@ -255,32 +272,84 @@ function SuccessContent() {
         </CardContent>
       </Card>
 
-      {/* Email tickets as PDF */}
+      {/* Email + share tickets */}
       <Card className="mt-6">
-        <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <CardContent className="p-5 space-y-4">
           <div>
             <p className="font-medium text-sm">Email PDF tickets</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              We sent them to {order.buyerEmail} automatically — re-send anytime.
+              We sent them to {order.buyerEmail} automatically — re-send to any address.
             </p>
-            {emailMsg && (
-              <p className={`text-xs mt-1.5 ${emailState === 'error' ? 'text-destructive' : 'text-green-700'}`}>
-                {emailMsg}
-              </p>
-            )}
           </div>
-          <Button
-            variant="outline"
-            onClick={emailTickets}
-            disabled={emailState === 'sending'}
-            className="shrink-0"
+          <form
+            className="flex flex-col gap-2 sm:flex-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              emailTickets();
+            }}
           >
-            {emailState === 'sending' ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
-            ) : (
-              <><Mail className="h-4 w-4 mr-2" /> Email me PDF tickets</>
-            )}
-          </Button>
+            <Input
+              type="email"
+              value={emailTo}
+              onChange={(e) => setEmailTo(e.target.value)}
+              placeholder="you@example.com"
+              aria-label="Email address for PDF tickets"
+              className="sm:max-w-xs"
+            />
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={emailState === 'sending'}
+              className="shrink-0"
+            >
+              {emailState === 'sending' ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+              ) : (
+                <><Mail className="h-4 w-4 mr-2" /> Email PDF tickets</>
+              )}
+            </Button>
+          </form>
+          {emailMsg && (
+            <p className={`text-xs ${emailState === 'error' ? 'text-destructive' : 'text-green-700'}`}>
+              {emailMsg}
+            </p>
+          )}
+
+          <div className="border-t pt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gap-2 bg-[#25D366] text-white hover:bg-[#1faf55] border-0"
+              onClick={() => {
+                const url = `${window.location.origin}/tickets/${token}`;
+                const msg =
+                  `🎟️ ${order.event.name}\n${order.event.venueName}\n\n` +
+                  `View the ticket${order.tickets.length !== 1 ? 's' : ''} here:\n${url}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+              }}
+            >
+              <MessageCircle className="h-4 w-4" /> Share on WhatsApp
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={async () => {
+                await navigator.clipboard.writeText(`${window.location.origin}/tickets/${token}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              {copied ? (
+                <><CheckCircle2 className="h-4 w-4 text-green-600" /> Link copied</>
+              ) : (
+                <><Copy className="h-4 w-4" /> Copy ticket link</>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Anyone with the link can view all QR codes on this order — each code admits one
+            person, once.
+          </p>
         </CardContent>
       </Card>
 
@@ -317,6 +386,90 @@ function SuccessContent() {
       <p className="mt-6 text-xs text-muted-foreground text-center">
         Bookmark this page or visit My Tickets to access your QR codes anytime.
       </p>
+    </div>
+  );
+}
+
+/** Per-ticket "email this ticket to someone" — sends just that ticket's PDF. */
+function TicketSendInline({ ticketId, token }: { ticketId: string; token: string }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const send = async () => {
+    const to = email.trim().toLowerCase();
+    if (!to || !to.includes('@')) {
+      setState('error');
+      setMsg('Enter a valid email address.');
+      return;
+    }
+    setState('sending');
+    setMsg(null);
+    try {
+      const res = await fetch(
+        `${getApiBaseUrl()}/api/v1/tickets/${ticketId}/send?token=${encodeURIComponent(token)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: to }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setState('error');
+        setMsg(data?.error ?? `Failed to send (${res.status}).`);
+        return;
+      }
+      setState('sent');
+      setMsg(`Sent to ${to}`);
+    } catch {
+      setState('error');
+      setMsg('Network error. Please try again.');
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-fit gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(true)}
+      >
+        <Send className="h-3.5 w-3.5" /> Email this ticket
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+      >
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="friend@example.com"
+          aria-label="Recipient email for this ticket"
+          className="h-8 text-sm"
+          autoFocus
+        />
+        <Button type="submit" size="sm" disabled={state === 'sending'} className="shrink-0">
+          {state === 'sending' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Send'}
+        </Button>
+      </form>
+      {msg && (
+        <p className={`text-xs ${state === 'error' ? 'text-destructive' : 'text-green-700'}`}>
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

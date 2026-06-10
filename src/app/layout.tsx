@@ -14,10 +14,30 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ['600', '700', '800'],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://choicestubs.com';
+
 export const metadata: Metadata = {
-  title: 'Choice Stubs — Event Tickets',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Choice Stubs — Event Tickets',
+    template: '%s · Choice Stubs',
+  },
   description:
     'Find and book tickets for concerts, parties, stage shows, and festivals near you.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Choice Stubs',
+    title: 'Choice Stubs — Event Tickets',
+    description:
+      'Find and book tickets for concerts, parties, stage shows, and festivals near you.',
+    url: SITE_URL,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Choice Stubs — Event Tickets',
+    description:
+      'Find and book tickets for concerts, parties, stage shows, and festivals near you.',
+  },
 };
 
 export default function RootLayout({

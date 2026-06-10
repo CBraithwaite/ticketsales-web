@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import QrCodeImage from '@/components/ui/QrCodeImage';
 import TransferModal from '@/components/tickets/TransferModal';
 import RefundModal from '@/components/tickets/RefundModal';
-import { CalendarDays, MapPin, Loader2, Ticket } from 'lucide-react';
+import ShareTicketModal from '@/components/tickets/ShareTicketModal';
+import { CalendarDays, MapPin, Loader2, Ticket, Send } from 'lucide-react';
 import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface MyTicket {
@@ -23,6 +24,7 @@ interface MyTicket {
   qrPayload: string;
   order: {
     orderNumber: string;
+    confirmationToken: string;
     eventId: string;
     eventName: string;
     eventSlug: string;
@@ -51,6 +53,7 @@ export default function MyTicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [transferTicket, setTransferTicket] = useState<MyTicket | null>(null);
   const [refundTicket, setRefundTicket] = useState<MyTicket | null>(null);
+  const [shareTicket, setShareTicket] = useState<MyTicket | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login?next=/me/tickets');
@@ -139,6 +142,7 @@ export default function MyTicketsPage() {
                 ticket={t}
                 onTransfer={() => setTransferTicket(t)}
                 onRefund={() => setRefundTicket(t)}
+                onShare={() => setShareTicket(t)}
               />
             ))}
           </div>
@@ -170,6 +174,14 @@ export default function MyTicketsPage() {
         />
       )}
 
+      {shareTicket && (
+        <ShareTicketModal
+          ticket={shareTicket}
+          onClose={() => setShareTicket(null)}
+          accessToken={session?.accessToken ?? ''}
+        />
+      )}
+
       {refundTicket && (
         <RefundModal
           ticket={refundTicket}
@@ -190,11 +202,13 @@ function TicketCard({
   past,
   onTransfer,
   onRefund,
+  onShare,
 }: {
   ticket: MyTicket;
   past?: boolean;
   onTransfer?: () => void;
   onRefund?: () => void;
+  onShare?: () => void;
 }) {
   const [showQr, setShowQr] = useState(false);
 
@@ -249,6 +263,11 @@ function TicketCard({
             </Button>
             {!past && ticket.status === 'Active' && (
               <>
+                {onShare && (
+                  <Button variant="ghost" size="sm" onClick={onShare} className="gap-1.5">
+                    <Send className="h-3.5 w-3.5" /> Send
+                  </Button>
+                )}
                 {onTransfer && (
                   <Button variant="ghost" size="sm" onClick={onTransfer}>
                     Transfer

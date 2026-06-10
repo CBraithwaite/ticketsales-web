@@ -7,9 +7,86 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle, Wallet } from 'lucide-react';
+import {
+  Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle, Wallet,
+  Banknote, ScanLine, Clock, Users, ReceiptText,
+} from 'lucide-react';
 
 export const metadata = { title: 'Organizer dashboard · Choice Stubs' };
+
+interface CurrencyAmount {
+  currency: string;
+  amount: number;
+}
+
+interface OrganizerStats {
+  events: { total: number; published: number; upcoming: number };
+  tickets: { sold: number; soldLast7Days: number; scanned: number; comps: number };
+  revenue: {
+    gross: CurrencyAmount[];
+    grossLast7Days: CurrencyAmount[];
+    refunded: CurrencyAmount[];
+    net: CurrencyAmount[];
+  };
+  attention: { pendingRefundRequests: number; waitlistEntries: number };
+}
+
+interface PayoutEventSummary {
+  eligibleAmount: number;
+  pendingPayoutAmount: number;
+  currency: string;
+}
+
+const CURRENCY_PREFIX: Record<string, string> = {
+  JMD: 'J$', USD: 'US$', CAD: 'CA$', TTD: 'TT$', BBD: 'Bds$', GBP: '£',
+};
+
+function fmtMoney({ currency, amount }: CurrencyAmount): string {
+  const prefix = CURRENCY_PREFIX[currency] ?? `${currency} `;
+  const compact = Math.abs(amount) >= 100_000;
+  return `${prefix}${amount.toLocaleString(DEFAULT_LOCALE, {
+    notation: compact ? 'compact' : 'standard',
+    maximumFractionDigits: compact ? 1 : 0,
+  })}`;
+}
+
+/** Largest currency shown as the headline; any others join the sub-line. */
+function moneyParts(amounts: CurrencyAmount[]): { value: string; extra?: string } {
+  if (amounts.length === 0) return { value: fmtMoney({ currency: 'JMD', amount: 0 }) };
+  return {
+    value: fmtMoney(amounts[0]),
+    extra: amounts.length > 1 ? amounts.slice(1).map(fmtMoney).join(' · ') : undefined,
+  };
+}
+
+function StatCard({
+  icon: Icon,
+  iconClass,
+  value,
+  label,
+  sub,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  iconClass: string;
+  value: string;
+  label: string;
+  sub?: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xl font-bold leading-tight truncate">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          {sub && <p className="text-[11px] text-muted-foreground/80 truncate">{sub}</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const STATUS_BADGE: Record<EventListItem['status'], string> = {
   Draft: 'bg-neutral-100 text-neutral-700 border-neutral-200',
@@ -37,11 +114,36 @@ export default async function OrganizerDashboard() {
   }
 
   const organizer = (await orgRes.json()) as OrganizerResponse;
-  const eventsRes = await authedFetch('/api/v1/organizers/me/events');
+  const [eventsRes, statsRes, payoutRes] = await Promise.all([
+    authedFetch('/api/v1/organizers/me/events'),
+    authedFetch('/api/v1/organizers/me/stats'),
+    authedFetch('/api/v1/organizers/me/payouts/summary'),
+  ]);
   const events = eventsRes.ok ? ((await eventsRes.json()) as EventListItem[]) : [];
+  const stats = statsRes.ok ? ((await statsRes.json()) as OrganizerStats) : null;
+  const payoutSummaries = payoutRes.ok
+    ? ((await payoutRes.json()) as PayoutEventSummary[])
+    : [];
 
   const totalTickets = events.reduce((s, e) => s + e.totalInventory, 0);
   const totalSold = events.reduce((s, e) => s + (e.totalInventory - e.remainingInventory), 0);
+
+  // Awaiting payout = settled-and-eligible plus already-requested amounts, per currency.
+  const pendingPayout: CurrencyAmount[] = Object.entries(
+    payoutSummaries.reduce<Record<string, number>>((acc, s) => {
+      const amt = s.eligibleAmount + s.pendingPayoutAmount;
+      if (amt > 0) acc[s.currency] = (acc[s.currency] ?? 0) + amt;
+      return acc;
+    }, {}),
+  )
+    .map(([currency, amount]) => ({ currency, amount }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const gross = moneyParts(stats?.revenue.gross ?? []);
+  const net = moneyParts(stats?.revenue.net ?? []);
+  const last7 = moneyParts(stats?.revenue.grossLast7Days ?? []);
+  const payout = moneyParts(pendingPayout);
+  const needsAttention = (stats?.attention.pendingRefundRequests ?? 0) > 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -73,42 +175,100 @@ export default async function OrganizerDashboard() {
         )}
       </header>
 
-      {/* Quick stats */}
+      {/* Needs attention */}
+      {needsAttention && (
+        <Card className="mt-8 border-amber-300 bg-amber-50">
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-3">
+              <ReceiptText className="h-5 w-5 text-amber-700 shrink-0" />
+              <p className="text-sm text-amber-900">
+                <span className="font-semibold">
+                  {stats!.attention.pendingRefundRequests} refund request
+                  {stats!.attention.pendingRefundRequests !== 1 ? 's' : ''}
+                </span>{' '}
+                waiting for your decision — open the event to approve or decline.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Revenue stats */}
+      {stats && stats.revenue.gross.length > 0 && (
+        <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard
+            icon={Banknote}
+            iconClass="bg-green-100 text-green-700"
+            value={gross.value}
+            label="Gross sales"
+            sub={gross.extra}
+          />
+          <StatCard
+            icon={Wallet}
+            iconClass="bg-emerald-100 text-emerald-700"
+            value={net.value}
+            label="Net revenue"
+            sub={net.extra ?? (stats.revenue.refunded.length > 0 ? 'after refunds' : undefined)}
+          />
+          <StatCard
+            icon={TrendingUp}
+            iconClass="bg-blue-100 text-blue-700"
+            value={last7.value}
+            label="Sales — last 7 days"
+            sub={`${stats.tickets.soldLast7Days} ticket${stats.tickets.soldLast7Days !== 1 ? 's' : ''} this week`}
+          />
+          <StatCard
+            icon={Clock}
+            iconClass="bg-violet-100 text-violet-700"
+            value={payout.value}
+            label="Awaiting payout"
+            sub={payout.extra}
+          />
+        </div>
+      )}
+
+      {/* Activity stats */}
       {events.length > 0 && (
-        <div className="mt-8 grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <CalendarDays className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{events.length}</p>
-                <p className="text-xs text-muted-foreground">Events</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100">
-                <Ticket className="h-5 w-5 text-green-700" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalSold}</p>
-                <p className="text-xs text-muted-foreground">Tickets Sold</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
-                <TrendingUp className="h-5 w-5 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalTickets > 0 ? Math.round((totalSold / totalTickets) * 100) : 0}%</p>
-                <p className="text-xs text-muted-foreground">Sell-through</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className={`${stats && stats.revenue.gross.length > 0 ? 'mt-4' : 'mt-8'} grid grid-cols-2 gap-4 lg:grid-cols-4`}>
+          <StatCard
+            icon={CalendarDays}
+            iconClass="bg-primary/10 text-primary"
+            value={String(stats?.events.total ?? events.length)}
+            label="Events"
+            sub={
+              stats
+                ? `${stats.events.published} published · ${stats.events.upcoming} upcoming`
+                : undefined
+            }
+          />
+          <StatCard
+            icon={Ticket}
+            iconClass="bg-green-100 text-green-700"
+            value={String(stats?.tickets.sold ?? totalSold)}
+            label="Tickets sold"
+            sub={stats && stats.tickets.comps > 0 ? `incl. ${stats.tickets.comps} comps` : undefined}
+          />
+          <StatCard
+            icon={ScanLine}
+            iconClass="bg-sky-100 text-sky-700"
+            value={String(stats?.tickets.scanned ?? 0)}
+            label="Scanned at gate"
+          />
+          <StatCard
+            icon={Users}
+            iconClass="bg-amber-100 text-amber-700"
+            value={
+              stats && stats.attention.waitlistEntries > 0
+                ? String(stats.attention.waitlistEntries)
+                : `${totalTickets > 0 ? Math.round((totalSold / totalTickets) * 100) : 0}%`
+            }
+            label={stats && stats.attention.waitlistEntries > 0 ? 'On waitlists' : 'Sell-through'}
+            sub={
+              stats && stats.attention.waitlistEntries > 0
+                ? `${totalTickets > 0 ? Math.round((totalSold / totalTickets) * 100) : 0}% sell-through`
+                : undefined
+            }
+          />
         </div>
       )}
 

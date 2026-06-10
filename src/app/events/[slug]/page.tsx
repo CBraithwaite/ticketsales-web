@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getApiBaseUrl } from '@/lib/api';
-import type { EventDetail } from '@/types/api';
+import type { EventDetail, PaymentMethods } from '@/types/api';
 import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,19 @@ async function fetchEvent(slug: string): Promise<EventDetail | null> {
   return (await res.json()) as EventDetail;
 }
 
+// Fall back to card-only if the capability probe fails — never block checkout.
+async function fetchPaymentMethods(): Promise<PaymentMethods> {
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/checkout/payment-methods`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    return (await res.json()) as PaymentMethods;
+  } catch {
+    return { card: true, wiPay: false, bank: false };
+  }
+}
+
 export async function generateMetadata({ params }: Props) {
   const ev = await fetchEvent(params.slug).catch(() => null);
   if (!ev) return { title: 'Event not found · Choice Stubs' };
@@ -36,7 +49,10 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function EventDetailPage({ params }: Props) {
-  const ev = await fetchEvent(params.slug);
+  const [ev, methods] = await Promise.all([
+    fetchEvent(params.slug),
+    fetchPaymentMethods(),
+  ]);
   if (!ev) notFound();
 
   const cat = (CATEGORY_LABELS as Record<string, string>)[ev.category] ?? ev.category;
@@ -144,7 +160,7 @@ export default async function EventDetailPage({ params }: Props) {
 
           {/* Right: Checkout panel */}
           <div className="lg:col-span-2">
-            <CheckoutPanel event={ev} />
+            <CheckoutPanel event={ev} methods={methods} />
           </div>
         </div>
       </div>

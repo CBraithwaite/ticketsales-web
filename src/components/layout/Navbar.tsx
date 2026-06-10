@@ -30,10 +30,14 @@ import {
   LayoutDashboard,
   CalendarDays,
   ChevronDown,
+  Tag,
+  CircleHelp,
 } from 'lucide-react';
 
 const NAV_LINKS = [
   { label: 'Browse Events', href: '/', icon: CalendarDays },
+  { label: 'Pricing', href: '/pricing', icon: Tag },
+  { label: 'Help', href: '/help', icon: CircleHelp },
 ];
 
 export default function Navbar() {
@@ -54,6 +58,7 @@ export default function Navbar() {
     .toUpperCase() || '?';
 
   const isOrganizer = (session?.user as { roles?: string[] })?.roles?.includes('Organizer');
+  const sellHref = isAuthed ? (isOrganizer ? '/organizer' : '/organizer/apply') : '/signup';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-xl">
@@ -88,6 +93,16 @@ export default function Navbar() {
 
         {/* Desktop auth */}
         <div className="hidden md:flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="rounded-sm font-semibold border-primary/40 text-primary hover:bg-primary/5 hover:text-primary"
+          >
+            <Link href={sellHref}>
+              <Ticket className="h-3.5 w-3.5" /> Sell Tickets
+            </Link>
+          </Button>
           {isAuthed ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -183,6 +198,17 @@ export default function Navbar() {
                   </Link>
                 </Button>
               ))}
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 font-semibold border-primary/40 text-primary hover:bg-primary/5 hover:text-primary"
+                asChild
+                onClick={() => setSheetOpen(false)}
+              >
+                <Link href={sellHref}>
+                  <Ticket className="h-4 w-4" /> Sell Tickets
+                </Link>
+              </Button>
 
               <div className="my-3 border-t" />
 

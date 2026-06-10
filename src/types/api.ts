@@ -99,6 +99,13 @@ export interface EventDetail {
   occurrences: OccurrenceResponse[] | null;
 }
 
+/** Which payment methods the server has configured (GET /checkout/payment-methods). */
+export interface PaymentMethods {
+  card: boolean;
+  wiPay: boolean;
+  bank: boolean;
+}
+
 export interface OrganizerRefundSummary {
   id: string;
   orderNumber: string;

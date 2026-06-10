@@ -10,14 +10,19 @@ const LINKS = {
   Organizers: [
     { label: 'Sell Tickets', href: '/organizer/apply' },
     { label: 'Organizer Dashboard', href: '/organizer' },
-    { label: 'Pricing & Fees', href: '#' },
-    { label: 'Help Centre', href: '#' },
+    { label: 'Pricing & Fees', href: '/pricing' },
+    { label: 'Organizer Guide', href: '/help/organizers' },
+  ],
+  Support: [
+    { label: 'Help Centre', href: '/help' },
+    { label: 'How to Buy Tickets', href: '/help/buyers' },
+    { label: 'Gate Staff Guide', href: '/help/scanning' },
+    { label: 'Contact', href: '/contact' },
   ],
   Company: [
-    { label: 'About', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Contact', href: '#' },
+    { label: 'About', href: '/about' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Privacy Policy', href: '/privacy' },
   ],
 };
 
@@ -27,7 +32,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6">
 
         {/* Top row */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 lg:grid-cols-5">
 
           {/* Brand */}
           <div className="col-span-2 sm:col-span-2 lg:col-span-1">
