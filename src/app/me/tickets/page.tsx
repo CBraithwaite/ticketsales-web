@@ -15,23 +15,9 @@ import ShareTicketModal from '@/components/tickets/ShareTicketModal';
 import { CalendarDays, MapPin, Loader2, Ticket, Send } from 'lucide-react';
 import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
-interface MyTicket {
-  id: string;
-  status: string;
-  tierId: string;
-  tierName: string;
-  holderName: string;
-  qrPayload: string;
-  order: {
-    orderNumber: string;
-    confirmationToken: string;
-    eventId: string;
-    eventName: string;
-    eventSlug: string;
-    eventStartsAt: string;
-    venueName: string;
-  };
-}
+import type { MyTicketRow } from '@/types/api';
+
+type MyTicket = MyTicketRow;
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleString(DEFAULT_LOCALE, {

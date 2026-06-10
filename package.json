@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen:api": "openapi-typescript http://localhost:5080/swagger/v1/swagger.json -o src/types/api.generated.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.0",
@@ -37,6 +38,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "8.57.1",
     "eslint-config-next": "^15.5.19",
+    "openapi-typescript": "^7.13.0",
     "postcss": "8.4.47",
     "tailwindcss": "^4.3.0",
     "tailwindcss-animate": "^1.0.7",

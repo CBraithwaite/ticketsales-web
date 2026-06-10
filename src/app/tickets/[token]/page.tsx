@@ -9,22 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
-interface TicketItem {
-  tierName: string;
-  holderName: string;
-  qrPayload: string;
-  index: number;
-}
-
-interface TicketViewResponse {
-  eventName: string;
-  eventDate: string;
-  venueName: string;
-  orderNumber: string;
-  isComp: boolean;
-  totalTickets: number;
-  tickets: TicketItem[];
-}
+import type { TicketViewResponse } from '@/types/api';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(DEFAULT_LOCALE, {

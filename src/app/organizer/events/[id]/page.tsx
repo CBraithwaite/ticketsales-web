@@ -184,7 +184,7 @@ export default async function ManageEventPage(props: Props) {
           <ScannerManager eventId={ev.id} scanners={scanners} />
           <CompManager eventId={ev.id} tiers={allTiers} comps={comps} />
           <RefundManager eventId={ev.id} refunds={refunds} />
-          <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl} galleryUrls={ev.galleryUrls} />
+          <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl ?? null} galleryUrls={ev.galleryUrls} />
         </CardContent>
       </Card>
     </div>

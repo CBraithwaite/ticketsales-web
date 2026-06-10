@@ -14,28 +14,9 @@ import {
 
 export const metadata = { title: 'Organizer dashboard · Choice Stubs' };
 
-interface CurrencyAmount {
-  currency: string;
-  amount: number;
-}
-
-interface OrganizerStats {
-  events: { total: number; published: number; upcoming: number };
-  tickets: { sold: number; soldLast7Days: number; scanned: number; comps: number };
-  revenue: {
-    gross: CurrencyAmount[];
-    grossLast7Days: CurrencyAmount[];
-    refunded: CurrencyAmount[];
-    net: CurrencyAmount[];
-  };
-  attention: { pendingRefundRequests: number; waitlistEntries: number };
-}
-
-interface PayoutEventSummary {
-  eligibleAmount: number;
-  pendingPayoutAmount: number;
-  currency: string;
-}
+type OrganizerStats = import('@/types/api').OrganizerStatsResponse;
+type CurrencyAmount = import('@/types/api').CurrencyAmount;
+type PayoutEventSummary = import('@/types/api').PayoutEventSummary;
 
 const CURRENCY_PREFIX: Record<string, string> = {
   JMD: 'J$', USD: 'US$', CAD: 'CA$', TTD: 'TT$', BBD: 'Bds$', GBP: '£',

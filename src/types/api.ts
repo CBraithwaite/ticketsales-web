@@ -1,124 +1,99 @@
 /**
- * Shared API DTOs that mirror the C# response shapes.
- * Keep these in sync with backend/TicketSales.Api/Endpoints/Dtos/*.
+ * API types. Structural shapes come from `api.generated.ts` (run `npm run
+ * gen:api` against the running backend to refresh after API changes) — only
+ * enum narrowing and frontend-only constants live here. C# enums serialize as
+ * plain strings in the OpenAPI spec, so we re-narrow those fields by hand.
+ *
+ * A few admin/promo types near the bottom are still hand-written because
+ * their endpoints don't declare response types yet.
  */
+import type { components } from './api.generated';
 
-export interface OrganizerResponse {
-  id: string;
-  businessName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  taxRegistrationNumber: string | null;
-  verificationStatus: 'Pending' | 'UnderReview' | 'Approved' | 'Rejected' | 'Suspended';
-  verifiedAt: string | null;
-  payoutBankName: string | null;
-  payoutBankAccountLast4: string | null;
-  payoutCurrency: string;
-}
+export type Schemas = components['schemas'];
 
+// ---- Enum narrowings (keep in sync with backend enums) -----------------------
+
+export type EventStatus = 'Draft' | 'Published' | 'Unlisted' | 'Cancelled' | 'Completed';
 export type EventType = 'SingleDate' | 'Series';
-
 export type Currency = 'JMD' | 'USD' | 'TTD' | 'BBD' | 'CAD' | 'GBP' | 'EUR';
+export type OrderStatus =
+  | 'Pending' | 'Paid' | 'Failed' | 'Refunded' | 'PartiallyRefunded' | 'Cancelled' | 'Expired';
+export type RefundStatus = 'Requested' | 'Approved' | 'Rejected' | 'Processing' | 'Refunded';
+export type PayoutStatus = 'Pending' | 'Processing' | 'Paid' | 'Failed';
+export type VerificationStatus = 'Pending' | 'UnderReview' | 'Approved' | 'Rejected' | 'Suspended';
 
-export interface TierResponse {
-  id: string;
-  name: string;
-  description: string | null;
-  priceAmount: number;
+// ---- Generated-backed response types -----------------------------------------
+
+export type OrganizerResponse = Omit<Schemas['OrganizerResponse'], 'verificationStatus'> & {
+  verificationStatus: VerificationStatus;
+};
+
+export type TierResponse = Omit<Schemas['TierResponse'], 'currency'> & {
   currency: Currency;
-  inventoryTotal: number;
-  inventorySold: number;
-  inventoryReserved: number;
-  inventoryAvailable: number;
-  minPerOrder: number;
-  maxPerOrder: number;
-  isTransferable: boolean;
-  isRefundable: boolean;
-  saleStartsAt: string | null;
-  saleEndsAt: string | null;
-  displayOrder: number;
-  occurrenceId: string | null;
-}
+};
 
-export interface OccurrenceResponse {
-  id: string;
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string | null;
-  label: string | null;
+export type OccurrenceResponse = Omit<
+  Schemas['OccurrenceResponse'],
+  'status' | 'lowestPriceCurrency' | 'tiers'
+> & {
   status: 'Scheduled' | 'Cancelled';
-  displayOrder: number;
-  tiers: TierResponse[];
-  remainingInventory: number;
-  lowestPriceAmount: number;
   lowestPriceCurrency: Currency;
-}
-
-export interface EventListItem {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  status: 'Draft' | 'Published' | 'Unlisted' | 'Cancelled' | 'Completed';
-  country: string;
-  venueName: string;
-  startsAt: string;
-  endsAt: string;
-  coverImageUrl: string | null;
-  lowestPriceAmount: number;
-  lowestPriceCurrency: Currency;
-  totalInventory: number;
-  remainingInventory: number;
-  timeZone: string;
-  type: EventType;
-  occurrenceCount: number;
-}
-
-export interface EventDetail {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  description: string;
-  status: EventListItem['status'];
-  country: string;
-  venueName: string;
-  venueAddress: string;
-  startsAt: string;
-  endsAt: string;
-  doorsAt: string | null;
-  ageRestriction: string | null;
-  dressCode: string | null;
-  coverImageUrl: string | null;
-  galleryUrls: string[];
-  timeZone: string;
-  organizer: { id: string; businessName: string };
   tiers: TierResponse[];
+};
+
+export type EventListItem = Omit<
+  Schemas['EventListItem'],
+  'status' | 'type' | 'lowestPriceCurrency'
+> & {
+  status: EventStatus;
   type: EventType;
+  lowestPriceCurrency: Currency;
+};
+
+export type EventDetail = Omit<
+  Schemas['EventDetail'],
+  'status' | 'type' | 'tiers' | 'occurrences'
+> & {
+  status: EventStatus;
+  type: EventType;
+  tiers: TierResponse[];
   occurrences: OccurrenceResponse[] | null;
-}
+};
 
 /** Which payment methods the server has configured (GET /checkout/payment-methods). */
-export interface PaymentMethods {
-  card: boolean;
-  wiPay: boolean;
-  bank: boolean;
-}
+export type PaymentMethods = Schemas['PaymentMethodsResponse'];
 
-export interface OrganizerRefundSummary {
-  id: string;
-  orderNumber: string;
-  buyerName: string;
-  status: 'Requested' | 'Approved' | 'Rejected' | 'Processing' | 'Refunded';
-  amount: number;
-  currency: string;
-  reason: string;
-  requestedAt: string;
-  resolvedAt: string | null;
-}
+export type OrganizerRefundSummary = Omit<Schemas['OrganizerRefundSummary'], 'status'> & {
+  status: RefundStatus;
+};
 
-/** Constants matching backend enums (order matters where it matters). */
+export type TicketBrief = Schemas['TicketBrief'];
+
+export type OrderSummary = Omit<Schemas['OrderSummary'], 'status' | 'tickets'> & {
+  status: OrderStatus;
+  tickets: TicketBrief[];
+};
+
+export type BankTransferReserveResponse = Schemas['BankTransferReserveResponse'];
+
+export type PayoutEventSummary = Schemas['PayoutEventSummary'];
+
+export type PayoutResponse = Omit<Schemas['PayoutResponse'], 'status'> & {
+  status: PayoutStatus;
+};
+
+// My Tickets / sharing / dashboard (new typed endpoints)
+export type MyTicketOrder = Schemas['MyTicketOrder'];
+export type MyTicketRow = Schemas['MyTicketRow'];
+export type SendTicketResponse = Schemas['SendTicketResponse'];
+export type EmailTicketsResponse = Schemas['EmailTicketsResponse'];
+export type TicketViewItem = Schemas['TicketViewItem'];
+export type TicketViewResponse = Schemas['TicketViewResponse'];
+export type CurrencyAmount = Schemas['CurrencyAmount'];
+export type OrganizerStatsResponse = Schemas['OrganizerStatsResponse'];
+
+// ---- Constants matching backend enums (order matters where it matters) -------
+
 export const COUNTRIES = [
   'Jamaica',
   'TrinidadAndTobago',
@@ -173,81 +148,7 @@ export const CATEGORY_LABELS: Record<typeof CATEGORIES[number], string> = {
   Other: 'Other',
 };
 
-export interface TicketBrief {
-  id: string;
-  status: string;
-  tierId: string;
-  tierName: string;
-  holderName: string;
-  qrPayload: string;
-}
-
-export interface OrderSummary {
-  orderNumber: string;
-  status: 'Pending' | 'Paid' | 'Failed' | 'Refunded' | 'PartiallyRefunded' | 'Cancelled' | 'Expired';
-  subtotalAmount: number;
-  feesAmount: number;
-  totalAmount: number;
-  currency: string;
-  expiresAt: string | null;
-  paidAt: string | null;
-  buyerEmail: string;
-  buyerName: string;
-  event: { id: string; slug: string; name: string; startsAt: string; venueName: string; timeZone: string };
-  tickets: TicketBrief[];
-}
-
-// ---- Bank Transfer ----------------------------------------------------------
-
-export interface BankTransferReserveResponse {
-  orderNumber: string;
-  confirmationToken: string;
-  expiresAt: string;
-  subtotalAmount: number;
-  feesAmount: number;
-  totalAmount: number;
-  currency: string;
-  bankDetails: {
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
-    routingNumber: string | null;
-    branch: string | null;
-  };
-  paymentMemo: string;
-}
-
-// ---- Payouts ----------------------------------------------------------------
-
-export interface PayoutEventSummary {
-  eventId: string;
-  eventName: string;
-  eventDate: string;
-  ticketsSold: number;
-  grossAmount: number;
-  feesAmount: number;
-  netAmount: number;
-  eligibleAmount: number;
-  pendingPayoutAmount: number;
-  paidOutAmount: number;
-  currency: string;
-}
-
-export interface PayoutResponse {
-  id: string;
-  eventId: string | null;
-  eventName: string | null;
-  periodStart: string;
-  periodEnd: string;
-  grossAmount: number;
-  feeAmount: number;
-  netAmount: number;
-  currency: string;
-  status: 'Pending' | 'Processing' | 'Paid' | 'Failed';
-  bankRef: string | null;
-  scheduledAt: string;
-  paidAt: string | null;
-}
+// ---- Hand-written (endpoints without declared response types yet) ------------
 
 export interface AdminPayoutItem {
   id: string;
