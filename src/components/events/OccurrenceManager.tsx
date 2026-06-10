@@ -173,7 +173,7 @@ export default function OccurrenceManager({ eventId, occurrences: initial }: Pro
           <select
             value={form.currency}
             onChange={(e) => set({ ...form, currency: e.target.value as 'JMD' | 'USD' })}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
           >
             <option value="JMD">JMD</option>
             <option value="USD">USD</option>

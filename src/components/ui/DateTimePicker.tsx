@@ -102,7 +102,7 @@ export function DateTimePicker({ value, onChange, placeholder = 'Select date & t
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex h-8 w-full items-center justify-between gap-1 rounded-lg border border-input bg-transparent py-1 pl-2.5 pr-2 text-left text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
+          'flex h-8 w-full items-center justify-between gap-1 rounded-lg border border-input bg-transparent py-1 pl-2.5 pr-2 text-left text-sm outline-hidden transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
           !selected && 'text-muted-foreground',
         )}
       >
@@ -122,7 +122,7 @@ export function DateTimePicker({ value, onChange, placeholder = 'Select date & t
       )}
 
       {open && (
-        <div className="absolute left-0 z-50 mt-1 w-[17rem] rounded-lg border border-border bg-card p-3 shadow-lg">
+        <div className="absolute left-0 z-50 mt-1 w-68 rounded-lg border border-border bg-card p-3 shadow-lg">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" className="rounded-md p-1 hover:bg-muted"
               onClick={() => setViewMonth(new Date(year, month - 1, 1))} aria-label="Previous month">
@@ -172,7 +172,7 @@ export function DateTimePicker({ value, onChange, placeholder = 'Select date & t
               type="time"
               value={timeStr}
               onChange={(e) => setTime(e.target.value)}
-              className="h-8 flex-1 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring"
+              className="h-8 flex-1 rounded-lg border border-input bg-transparent px-2 text-sm outline-hidden focus-visible:border-ring"
             />
             <button type="button" className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-muted"
               onClick={() => setOpen(false)}>

@@ -60,7 +60,7 @@ export default function ScanResult({ result, onDismiss }: ScanResultProps) {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[60] flex flex-col items-center justify-center',
+        'fixed inset-0 z-60 flex flex-col items-center justify-center',
         config.bg,
       )}
       onClick={onDismiss}

@@ -635,7 +635,7 @@ export default function CreateEventForm() {
                 <select
                   value={repeatFreq}
                   onChange={(e) => setRepeatFreq(e.target.value as RepeatFreq)}
-                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm outline-none focus-visible:border-ring"
+                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm outline-hidden focus-visible:border-ring"
                 >
                   {(Object.keys(REPEAT_LABELS) as RepeatFreq[]).map((f) => (
                     <option key={f} value={f}>{REPEAT_LABELS[f]}</option>

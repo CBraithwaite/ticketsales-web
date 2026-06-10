@@ -327,7 +327,7 @@ export default function PromoCodeManager({ eventId, promoCodes: initial, tiers }
                   onChange={(e) =>
                     setForm({ ...form, discountType: e.target.value as 'Percentage' | 'FixedAmount' })
                   }
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="Percentage">Percentage</option>
                   <option value="FixedAmount">Fixed Amount</option>
@@ -354,7 +354,7 @@ export default function PromoCodeManager({ eventId, promoCodes: initial, tiers }
                     onChange={(e) =>
                       setForm({ ...form, discountCurrency: e.target.value as 'JMD' | 'USD' })
                     }
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="JMD">JMD</option>
                     <option value="USD">USD</option>

@@ -70,7 +70,7 @@ export default async function EventDetailPage(props: Props) {
       </div>
       {/* Hero image */}
       <div className="mx-auto mt-4 max-w-4xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-2xl aspect-[21/9] bg-neutral-200">
+        <div className="relative overflow-hidden rounded-2xl aspect-21/9 bg-neutral-200">
           {ev.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             (<img src={ev.coverImageUrl} alt="" className="h-full w-full object-cover" />)
@@ -79,12 +79,12 @@ export default async function EventDetailPage(props: Props) {
               <span className="text-7xl font-bold text-white/30">{ev.name.charAt(0).toUpperCase()}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 text-white">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-sm border-white/10">{cat}</Badge>
+              <Badge variant="secondary" className="bg-white/20 text-white backdrop-blur-xs border-white/10">{cat}</Badge>
               {ev.ageRestriction && (
-                <Badge variant="destructive" className="backdrop-blur-sm">{ev.ageRestriction}</Badge>
+                <Badge variant="destructive" className="backdrop-blur-xs">{ev.ageRestriction}</Badge>
               )}
             </div>
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl drop-shadow-md">{ev.name}</h1>

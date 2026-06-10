@@ -29,7 +29,7 @@ export default async function SignupPage(props: Props) {
 
         <div className="relative flex flex-col justify-between p-10 xl:p-12 text-white">
           <Link href="/" className="flex items-center gap-2.5 font-display font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm ring-1 ring-white/20">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur-xs ring-1 ring-white/20">
               <Ticket className="h-4 w-4" />
             </div>
             Choice Stubs

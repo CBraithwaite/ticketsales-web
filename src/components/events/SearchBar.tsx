@@ -66,7 +66,7 @@ export default function SearchBar() {
         onChange={onChange}
         placeholder="Search events, artists, or venues…"
         aria-label="Search events"
-        className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+        className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-hidden [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button

@@ -459,7 +459,7 @@ export default function ScannerSellPage() {
       )}
 
       {/* Sticky footer */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur-sm">
         <div className="mx-auto max-w-lg space-y-2 px-4 py-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>

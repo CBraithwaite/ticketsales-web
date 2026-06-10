@@ -23,7 +23,7 @@ export default function EventCard({ event }: { event: EventListItem }) {
       className="group flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-border"
     >
       {/* Image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-video w-full overflow-hidden bg-muted">
         {event.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -39,7 +39,7 @@ export default function EventCard({ event }: { event: EventListItem }) {
           </div>
         )}
         {/* Scrim at the bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
 
         {/* Date chip */}
         <div className="absolute right-3 top-3 flex flex-col items-center rounded-lg bg-white/95 px-2.5 py-1.5 text-center shadow-md">
@@ -49,7 +49,7 @@ export default function EventCard({ event }: { event: EventListItem }) {
 
         {/* Category + status badges bottom-left */}
         <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-          <Badge className="bg-white/15 text-white border-white/20 backdrop-blur-sm text-[11px] font-medium">
+          <Badge className="bg-white/15 text-white border-white/20 backdrop-blur-xs text-[11px] font-medium">
             {cat}
           </Badge>
           {soldOut && (

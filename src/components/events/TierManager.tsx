@@ -288,7 +288,7 @@ export default function TierManager({ eventId, tiers: initialTiers }: Props) {
                 <select
                   value={form.currency}
                   onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   {(['JMD', 'USD', 'TTD', 'BBD', 'CAD', 'GBP', 'EUR'] as Currency[]).map((c) => (
                     <option key={c} value={c}>{c}</option>

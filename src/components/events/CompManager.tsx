@@ -213,7 +213,7 @@ export default function CompManager({ eventId, tiers, comps: initialComps }: Pro
                   <select
                     value={tierId}
                     onChange={(e) => setTierId(e.target.value)}
-                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                   >
                     {tiers.map((t) => (
                       <option key={t.id} value={t.id}>
