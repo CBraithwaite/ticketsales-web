@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Eye, Users, BarChart3, Package } from 'lucide-react';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const metadata = { title: 'Manage event · Choice Stubs' };
@@ -43,7 +43,8 @@ const STATUS_VARIANT: Record<string, string> = {
   Completed: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
 };
 
-export default async function ManageEventPage({ params }: Props) {
+export default async function ManageEventPage(props: Props) {
+  const params = await props.params;
   const res = await authedFetch(`/api/v1/organizers/me/events`);
   if (res.status === 401) redirect('/login?next=/organizer');
   if (!res.ok) {

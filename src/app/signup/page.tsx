@@ -6,7 +6,7 @@ import { Ticket, CheckCircle2 } from 'lucide-react';
 export const metadata = { title: 'Create account · Choice Stubs' };
 
 interface Props {
-  searchParams: { email?: string };
+  searchParams: Promise<{ email?: string }>;
 }
 
 const PERKS = [
@@ -16,7 +16,8 @@ const PERKS = [
   'Become a verified event organizer',
 ];
 
-export default function SignupPage({ searchParams }: Props) {
+export default async function SignupPage(props: Props) {
+  const searchParams = await props.searchParams;
   const defaultEmail = searchParams.email ?? '';
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">

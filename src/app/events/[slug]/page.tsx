@@ -11,7 +11,7 @@ import CheckoutPanel from '@/components/checkout/CheckoutPanel';
 import { fmtRange, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const fmtMoney = (amount: number, currency: string) =>
@@ -39,7 +39,8 @@ async function fetchPaymentMethods(): Promise<PaymentMethods> {
   }
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata(props: Props) {
+  const params = await props.params;
   const ev = await fetchEvent(params.slug).catch(() => null);
   if (!ev) return { title: 'Event not found · Choice Stubs' };
   return {
@@ -48,7 +49,8 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function EventDetailPage({ params }: Props) {
+export default async function EventDetailPage(props: Props) {
+  const params = await props.params;
   const [ev, methods] = await Promise.all([
     fetchEvent(params.slug),
     fetchPaymentMethods(),
@@ -66,13 +68,12 @@ export default async function EventDetailPage({ params }: Props) {
           <Link href="/"><ArrowLeft className="h-4 w-4 mr-1" /> Back to events</Link>
         </Button>
       </div>
-
       {/* Hero image */}
       <div className="mx-auto mt-4 max-w-4xl px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-2xl aspect-[21/9] bg-neutral-200">
           {ev.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={ev.coverImageUrl} alt="" className="h-full w-full object-cover" />
+            (<img src={ev.coverImageUrl} alt="" className="h-full w-full object-cover" />)
           ) : (
             <div className="flex h-full w-full items-center justify-center gradient-hero">
               <span className="text-7xl font-bold text-white/30">{ev.name.charAt(0).toUpperCase()}</span>
@@ -91,7 +92,6 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
-
       {/* Content */}
       <div className="mx-auto mt-8 max-w-4xl px-4 sm:px-6">
         <div className="grid gap-8 lg:grid-cols-3">

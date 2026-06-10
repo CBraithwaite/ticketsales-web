@@ -75,11 +75,12 @@ function buildHref(sp: HomeSearchParams, patch: Partial<HomeSearchParams>): stri
   return qs ? `/?${qs}#events` : '/#events';
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: HomeSearchParams;
-}) {
+export default async function Home(
+  props: {
+    searchParams: Promise<HomeSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await auth();
   const isAuthed = !!session?.user;
 

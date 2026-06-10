@@ -15,7 +15,7 @@ export default function SearchBar() {
 
   const [value, setValue] = useState(urlQuery);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Sync from the URL (back/forward navigation) unless the user is mid-typing.
   useEffect(() => {
