@@ -22,7 +22,8 @@ const STATUS_BADGE: Record<string, string> = {
   Approved: 'bg-green-100 text-green-800',
   Rejected: 'bg-red-100 text-red-800',
   Processing: 'bg-blue-100 text-blue-800',
-  Refunded: 'bg-green-100 text-green-800',
+  Completed: 'bg-green-100 text-green-800',
+  Failed: 'bg-red-100 text-red-800',
 };
 
 function fmtDate(iso: string) {

@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let eventEntries: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/v1/events`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/events?limit=100`, {
       next: { revalidate: 3600 },
     });
     if (res.ok) {

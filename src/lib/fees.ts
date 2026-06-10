@@ -30,16 +30,11 @@ export function estimateFeeParts(
   currency: string,
 ): FeeParts {
   if (subtotal <= 0) return { processing: 0, service: 0, total: 0 };
-  const processing = Math.round(subtotal * (FEE_PERCENT / 100) * 100) / 100;
+  // subtotal × 2.99 is the fee in cents; snap float noise (1150 × 2.99 =
+  // 3438.4999…) before rounding so .005 boundaries round away from zero like
+  // the backend's decimal.Round — otherwise the shown total can be a cent
+  // below the charged amount.
+  const processing = Math.round(Number((subtotal * FEE_PERCENT).toFixed(4))) / 100;
   const service = (PER_TICKET_FEE[currency] ?? 0) * ticketCount;
   return { processing, service, total: processing + service };
-}
-
-/** Combined fee amount (processing + service). */
-export function estimateServiceFee(
-  subtotal: number,
-  ticketCount: number,
-  currency: string,
-): number {
-  return estimateFeeParts(subtotal, ticketCount, currency).total;
 }

@@ -1,4 +1,9 @@
 @import 'tailwindcss';
+/* Radix enter/exit animation utilities (animate-in/out, fade-*, zoom-*,
+   slide-in-from-*) used by dialog/dropdown/select/sheet. The old
+   tailwind.config.ts loaded tailwindcss-animate; in v4 the CSS-first
+   equivalent must be imported here or those classes compile to nothing. */
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 

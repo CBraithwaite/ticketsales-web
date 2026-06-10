@@ -18,7 +18,7 @@ export type EventType = 'SingleDate' | 'Series';
 export type Currency = 'JMD' | 'USD' | 'TTD' | 'BBD' | 'CAD' | 'GBP' | 'EUR';
 export type OrderStatus =
   | 'Pending' | 'Paid' | 'Failed' | 'Refunded' | 'PartiallyRefunded' | 'Cancelled' | 'Expired';
-export type RefundStatus = 'Requested' | 'Approved' | 'Rejected' | 'Processing' | 'Refunded';
+export type RefundStatus = 'Requested' | 'Approved' | 'Rejected' | 'Processing' | 'Completed' | 'Failed';
 export type PayoutStatus = 'Pending' | 'Processing' | 'Paid' | 'Failed';
 export type VerificationStatus = 'Pending' | 'UnderReview' | 'Approved' | 'Rejected' | 'Suspended';
 
