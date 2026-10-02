@@ -12,6 +12,7 @@ import {
 } from '@/lib/event-filters';
 import EventGrid from '@/components/events/EventGrid';
 import SearchBar from '@/components/events/SearchBar';
+import HeroTicket from '@/components/layout/HeroTicket';
 import { Button } from '@/components/ui/button';
 import {
   CalendarDays,
@@ -20,6 +21,9 @@ import {
   Mic2,
   PartyPopper,
   Presentation,
+  QrCode,
+  ScanLine,
+  ShieldCheck,
   Star,
   Users2,
   Zap,
@@ -131,10 +135,10 @@ export default async function Home(
         <div className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-accent/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-40 -left-20 h-[400px] w-[400px] rounded-full bg-primary/30 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6 lg:py-7">
-          <div className="max-w-2xl animate-fade-in-up">
+        <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-10 px-4 py-7 sm:px-6 sm:py-9 lg:py-8">
+          <div className="min-w-0 animate-fade-in-up">
             {/* Headline */}
-            <h1 className="font-display text-2xl font-extrabold leading-[1.1] tracking-tight sm:text-3xl lg:text-4xl">
+            <h1 className="font-display text-[28px] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
               Discover{' '}
               <span
                 className="bg-clip-text text-transparent"
@@ -147,25 +151,31 @@ export default async function Home(
               {' '}Near You
             </h1>
 
-            <p className="mt-1.5 text-sm text-white/70 sm:text-base max-w-xl leading-relaxed">
-              Concerts, parties, stage shows, and festivals — book in seconds and get your
-              QR tickets instantly.
+            {/* One line at every width: a shorter version on phones. */}
+            <p className="mt-3 whitespace-nowrap text-[15px] text-white/80 sm:text-lg">
+              <span className="sm:hidden">Concerts, parties, conferences &amp; more.</span>
+              <span className="hidden sm:inline">
+                Concerts, parties, conferences &amp; more — QR tickets in seconds.
+              </span>
             </p>
 
-            {/* Trust stats */}
-            <div className="mt-3 flex flex-wrap gap-5 animate-fade-in-up-delay">
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-sm font-medium text-white/90 animate-fade-in-up-delay">
               {[
-                { value: 'Instant', label: 'QR tickets by email' },
-                { value: 'Secure', label: 'Card & cash payments' },
-                { value: '2s', label: 'Gate scan time' },
-              ].map((stat) => (
-                <div key={stat.label} className="flex flex-col">
-                  <span className="font-display text-base font-bold text-white">{stat.value}</span>
-                  <span className="text-xs text-white/50 font-medium">{stat.label}</span>
-                </div>
+                { icon: QrCode, label: 'QR tickets by email' },
+                { icon: ShieldCheck, label: 'Card & cash payments' },
+                { icon: ScanLine, label: '2-second gate scans' },
+              ].map(({ icon: Icon, label }) => (
+                <li key={label} className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
+                    <Icon className="h-3.5 w-3.5 text-[hsl(44_96%_62%)]" />
+                  </span>
+                  {label}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
+
+          <HeroTicket />
         </div>
       </section>
 
