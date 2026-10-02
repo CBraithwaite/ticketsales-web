@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@/auth';
 import { authedFetch } from '@/lib/server-fetch';
 import SignOutButton from '@/components/auth/SignOutButton';
+import ChangePasswordCard from '@/components/auth/ChangePasswordCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ interface MeResponse {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   roles: string[];
+  hasPassword: boolean;
 }
 
 export default async function MePage() {
@@ -100,6 +102,8 @@ export default async function MePage() {
           </CardContent>
         </Card>
       )}
+
+      {me?.hasPassword && <ChangePasswordCard email={me.email} />}
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button asChild>
