@@ -133,6 +133,7 @@ export const CATEGORIES = [
   'Festival',
   'Comedy',
   'Sports',
+  'Conference',
   'Other',
 ] as const;
 
@@ -145,6 +146,7 @@ export const CATEGORY_LABELS: Record<typeof CATEGORIES[number], string> = {
   Festival: 'Festival',
   Comedy: 'Comedy',
   Sports: 'Sports',
+  Conference: 'Conference',
   Other: 'Other',
 };
 

@@ -19,6 +19,7 @@ import {
   Music2,
   Mic2,
   PartyPopper,
+  Presentation,
   Star,
   Users2,
   Zap,
@@ -62,6 +63,7 @@ const CATEGORIES = [
   { key: 'Party', label: 'Party', icon: PartyPopper },
   { key: 'Comedy', label: 'Comedy', icon: Users2 },
   { key: 'Concert', label: 'Concert', icon: Zap },
+  { key: 'Conference', label: 'Conference', icon: Presentation },
 ];
 
 /** Build a homepage href that merges the current filters with a patch. */
