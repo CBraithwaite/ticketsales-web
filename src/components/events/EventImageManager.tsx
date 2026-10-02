@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Image as ImageIcon, Plus, Trash2, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import ImageUploadButton from '@/components/events/ImageUploadButton';
 
 interface Props {
   eventId: string;
@@ -92,7 +93,11 @@ export default function EventImageManager({ eventId, coverImageUrl: initialCover
         <div className="mt-4 space-y-5">
           {/* Cover image */}
           <div className="space-y-2">
-            <Label>Cover Image URL</Label>
+            <Label>Cover Image</Label>
+            <div className="flex flex-wrap items-start gap-2">
+              <ImageUploadButton onUploaded={setCover} />
+              <span className="self-center text-xs text-muted-foreground">or paste a link</span>
+            </div>
             <Input
               placeholder="https://example.com/image.jpg"
               value={cover}
@@ -147,6 +152,12 @@ export default function EventImageManager({ eventId, coverImageUrl: initialCover
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
+            <ImageUploadButton
+              label="Upload gallery images"
+              multiple
+              onUploaded={(url) => setGallery((prev) => (prev.includes(url) ? prev : [...prev, url]))}
+            />
+            <p className="text-xs text-muted-foreground">Uploaded images are added here — click Save Images to keep them.</p>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

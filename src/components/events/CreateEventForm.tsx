@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/DateTimePicker';
+import ImageUploadButton from '@/components/events/ImageUploadButton';
 
 const CURRENCIES = ['JMD', 'USD', 'TTD', 'BBD', 'CAD', 'GBP', 'EUR'] as const;
 
@@ -436,8 +437,25 @@ export default function CreateEventForm() {
             name="coverImageUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cover image URL</FormLabel>
+                <FormLabel>Cover image</FormLabel>
+                <div className="flex flex-wrap items-start gap-2">
+                  <ImageUploadButton
+                    onUploaded={(url) => form.setValue('coverImageUrl', url, { shouldValidate: true, shouldDirty: true })}
+                  />
+                  <span className="self-center text-xs text-muted-foreground">or paste a link</span>
+                </div>
                 <FormControl><Input placeholder="https://…" {...field} /></FormControl>
+                {field.value && (
+                  <div className="relative mt-2 aspect-video max-w-sm overflow-hidden rounded-lg border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={field.value}
+                      alt="Cover preview"
+                      className="h-full w-full object-cover"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}
