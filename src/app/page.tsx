@@ -135,10 +135,10 @@ export default async function Home(
         <div className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-accent/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-40 -left-20 h-[400px] w-[400px] rounded-full bg-primary/30 blur-3xl" />
 
-        <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-10 px-4 py-7 sm:px-6 sm:py-9 lg:py-8">
+        <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-8 px-4 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0 animate-fade-in-up">
             {/* Headline */}
-            <h1 className="font-display text-[28px] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="font-display text-balance text-[22px] font-extrabold leading-[1.15] tracking-tight sm:text-[28px] lg:text-[34px]">
               Discover{' '}
               <span
                 className="bg-clip-text text-transparent"
@@ -152,22 +152,22 @@ export default async function Home(
             </h1>
 
             {/* One line at every width: a shorter version on phones. */}
-            <p className="mt-3 whitespace-nowrap text-[15px] text-white/80 sm:text-lg">
+            <p className="mt-1 whitespace-nowrap text-sm text-white/80 sm:text-base">
               <span className="sm:hidden">Concerts, parties, conferences &amp; more.</span>
               <span className="hidden sm:inline">
                 Concerts, parties, conferences &amp; more — QR tickets in seconds.
               </span>
             </p>
 
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5 text-sm font-medium text-white/90 animate-fade-in-up-delay">
+            <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] font-medium text-white/90 animate-fade-in-up-delay">
               {[
                 { icon: QrCode, label: 'QR tickets by email' },
                 { icon: ShieldCheck, label: 'Card & cash payments' },
                 { icon: ScanLine, label: '2-second gate scans' },
               ].map(({ icon: Icon, label }) => (
                 <li key={label} className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
-                    <Icon className="h-3.5 w-3.5 text-[hsl(44_96%_62%)]" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
+                    <Icon className="h-3 w-3 text-[hsl(44_96%_62%)]" />
                   </span>
                   {label}
                 </li>

@@ -9,6 +9,12 @@ const H = 168;
 const TEAR_X = 252; // x of the perforation between ticket body and stub
 const NOTCH_R = 12;
 
+// The artwork is drawn at 400×210 and scaled down as a whole, so every
+// proportion stays exact; the outer box reserves only the scaled size.
+const ART_W = 400;
+const ART_H = 210;
+const SCALE = 0.62;
+
 /** Ticket outline: rounded rectangle with semicircle notches at the tear line. */
 function TicketShape({ id, fill }: { id: string; fill: string }) {
   return (
@@ -64,52 +70,63 @@ export default function HeroTicket() {
   return (
     <div
       aria-hidden
-      className="relative hidden h-[210px] w-[400px] shrink-0 xl:block"
-      style={{ ['--ticket-paper' as string]: '#FFF7E2', ['--ticket-ink' as string]: '#0B3B22' }}
+      className="relative hidden shrink-0 xl:block"
+      style={{ width: ART_W * SCALE, height: ART_H * SCALE }}
     >
-      {/* Paper ticket fanned out behind */}
       <div
-        className="absolute right-2 top-1"
-        style={{ width: W, height: H, transform: 'rotate(5deg)' }}
+        className="absolute left-0 top-0 origin-top-left"
+        style={{
+          width: ART_W,
+          height: ART_H,
+          transform: `scale(${SCALE})`,
+          ['--ticket-paper' as string]: '#FFF7E2',
+          ['--ticket-ink' as string]: '#0B3B22',
+        }}
       >
-        <TicketShape id="hero-ticket-back" fill="rgb(255 247 226 / 0.16)" />
-      </div>
-
-      {/* Gold ticket in front */}
-      <div
-        className="hero-ticket absolute bottom-1 left-0 drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]"
-        style={{ width: W, height: H, transform: 'rotate(-4deg)' }}
-      >
-        <TicketShape id="hero-ticket-front" fill="hsl(44 96% 56%)" />
-
-        {/* Perforation */}
+        {/* Paper ticket fanned out behind */}
         <div
-          className="absolute border-l-2 border-dashed"
-          style={{ left: TEAR_X - 1, top: NOTCH_R + 8, bottom: NOTCH_R + 8, borderColor: 'rgb(11 59 34 / 0.35)' }}
-        />
-
-        {/* Ticket body */}
-        <div className="absolute inset-y-0 left-0 flex flex-col justify-between p-5" style={{ width: TEAR_X, color: 'var(--ticket-ink)' }}>
-          <div>
-            <p className="text-[13px] font-semibold opacity-75">Admit one</p>
-            <p className="font-display text-[26px] font-extrabold leading-[1.05] tracking-tight">
-              Your next
-              <br />
-              event
-            </p>
-          </div>
-          <div className="flex items-end justify-between text-[11px] font-semibold opacity-80">
-            <span>Choice Stubs</span>
-            <span>Scan at the gate</span>
-          </div>
+          className="absolute right-2 top-1"
+          style={{ width: W, height: H, transform: 'rotate(5deg)' }}
+        >
+          <TicketShape id="hero-ticket-back" fill="rgb(255 247 226 / 0.16)" />
         </div>
 
-        {/* Stub with QR */}
+        {/* Gold ticket in front */}
         <div
-          className="absolute inset-y-0 right-0 flex items-center justify-center"
-          style={{ width: W - TEAR_X, color: 'var(--ticket-ink)' }}
+          className="hero-ticket absolute bottom-1 left-0 drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]"
+          style={{ width: W, height: H, transform: 'rotate(-4deg)' }}
         >
-          <QrMark />
+          <TicketShape id="hero-ticket-front" fill="hsl(44 96% 56%)" />
+
+          {/* Perforation */}
+          <div
+            className="absolute border-l-2 border-dashed"
+            style={{ left: TEAR_X - 1, top: NOTCH_R + 8, bottom: NOTCH_R + 8, borderColor: 'rgb(11 59 34 / 0.35)' }}
+          />
+
+          {/* Ticket body */}
+          <div className="absolute inset-y-0 left-0 flex flex-col justify-between p-5" style={{ width: TEAR_X, color: 'var(--ticket-ink)' }}>
+            <div>
+              <p className="text-[13px] font-semibold opacity-75">Admit one</p>
+              <p className="font-display text-[26px] font-extrabold leading-[1.05] tracking-tight">
+                Your next
+                <br />
+                event
+              </p>
+            </div>
+            <div className="flex items-end justify-between text-[11px] font-semibold opacity-80">
+              <span>Choice Stubs</span>
+              <span>Scan at the gate</span>
+            </div>
+          </div>
+
+          {/* Stub with QR */}
+          <div
+            className="absolute inset-y-0 right-0 flex items-center justify-center"
+            style={{ width: W - TEAR_X, color: 'var(--ticket-ink)' }}
+          >
+            <QrMark />
+          </div>
         </div>
       </div>
     </div>
