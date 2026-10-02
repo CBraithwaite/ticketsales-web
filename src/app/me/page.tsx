@@ -39,6 +39,7 @@ export default async function MePage() {
   }
 
   const isOrganizer = !!me?.roles.includes('Organizer');
+  const isAdmin = !!me?.roles.includes('Admin');
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
@@ -116,6 +117,11 @@ export default async function MePage() {
         ) : (
           <Button asChild variant="outline">
             <Link href="/organizer/apply">Become an Organizer</Link>
+          </Button>
+        )}
+        {isAdmin && (
+          <Button asChild variant="outline">
+            <Link href="/admin">Admin</Link>
           </Button>
         )}
         <Button asChild variant="ghost">

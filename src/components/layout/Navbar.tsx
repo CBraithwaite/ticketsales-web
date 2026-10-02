@@ -32,6 +32,7 @@ import {
   ChevronDown,
   Tag,
   CircleHelp,
+  Shield,
 } from 'lucide-react';
 
 const NAV_LINKS = [
@@ -58,6 +59,7 @@ export default function Navbar() {
     .toUpperCase() || '?';
 
   const isOrganizer = (session?.user as { roles?: string[] })?.roles?.includes('Organizer');
+  const isAdmin = (session?.user as { roles?: string[] })?.roles?.includes('Admin');
   const sellHref = isAuthed ? (isOrganizer ? '/organizer' : '/organizer/apply') : '/signup';
 
   return (
@@ -141,6 +143,13 @@ export default function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/organizer">
                       <LayoutDashboard className="mr-2 h-4 w-4" /> Organizer Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <Shield className="mr-2 h-4 w-4" /> Admin
                     </Link>
                   </DropdownMenuItem>
                 )}
@@ -234,6 +243,11 @@ export default function Navbar() {
                   {isOrganizer && (
                     <Button variant="ghost" className="justify-start gap-2" asChild onClick={() => setSheetOpen(false)}>
                       <Link href="/organizer"><LayoutDashboard className="h-4 w-4" /> Organizer</Link>
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button variant="ghost" className="justify-start gap-2" asChild onClick={() => setSheetOpen(false)}>
+                      <Link href="/admin"><Shield className="h-4 w-4" /> Admin</Link>
                     </Button>
                   )}
                   <div className="my-3 border-t" />
