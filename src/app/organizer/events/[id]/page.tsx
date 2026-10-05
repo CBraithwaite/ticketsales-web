@@ -12,11 +12,12 @@ import CompManager from '@/components/events/CompManager';
 import OrderExportButton from '@/components/events/OrderExportButton';
 import RefundManager from '@/components/events/RefundManager';
 import EventImageManager from '@/components/events/EventImageManager';
+import CancelEventButton from '@/components/events/CancelEventButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Eye, Users, BarChart3, Package } from 'lucide-react';
+import { ArrowLeft, Ban, Eye, Users, BarChart3, Package } from 'lucide-react';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -93,6 +94,9 @@ export default async function ManageEventPage(props: Props) {
   const totalSold = allTiers.reduce((s, t) => s + t.inventorySold, 0);
   const totalAvailable = allTiers.reduce((s, t) => s + t.inventoryAvailable, 0);
 
+  const isCancelled = ev.status === 'Cancelled';
+  const canCancel = !isCancelled && ev.status !== 'Completed' && new Date(ev.endsAt) > new Date();
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <Button variant="ghost" asChild size="sm" className="text-muted-foreground">
@@ -132,9 +136,32 @@ export default async function ManageEventPage(props: Props) {
                   </Link>
                 </Button>
                 <OrderExportButton eventId={ev.id} eventSlug={ev.slug} />
+                <CancelEventButton eventId={ev.id} eventName={ev.name} />
+              </div>
+            )}
+            {ev.status !== 'Published' && (canCancel || isCancelled) && (
+              <div className="flex flex-wrap gap-2">
+                {isCancelled && <OrderExportButton eventId={ev.id} eventSlug={ev.slug} />}
+                {canCancel && <CancelEventButton eventId={ev.id} eventName={ev.name} />}
               </div>
             )}
           </div>
+
+          {isCancelled && (
+            <div className="mt-6 flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+              <Ban className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">
+                  Cancelled{ev.cancelledAt ? ` on ${fmtDate(ev.cancelledAt, ev.timeZone)}` : ''}
+                </p>
+                {ev.cancellationReason && <p className="mt-1">&ldquo;{ev.cancellationReason}&rdquo;</p>}
+                <p className="mt-2 text-red-800">
+                  Card payments are refunded automatically and every buyer has been emailed. Orders paid by bank
+                  transfer, WiPay or cash show as Approved below — pay those buyers back yourself.
+                </p>
+              </div>
+            </div>
+          )}
 
           <Separator className="my-6" />
 
@@ -175,16 +202,22 @@ export default async function ManageEventPage(props: Props) {
             </Card>
           </div>
 
-          {isSeries ? (
-            <OccurrenceManager eventId={ev.id} occurrences={ev.occurrences ?? []} />
+          {isCancelled ? (
+            <RefundManager eventId={ev.id} refunds={refunds} />
           ) : (
-            <TierManager eventId={ev.id} tiers={ev.tiers} />
+            <>
+              {isSeries ? (
+                <OccurrenceManager eventId={ev.id} occurrences={ev.occurrences ?? []} />
+              ) : (
+                <TierManager eventId={ev.id} tiers={ev.tiers} />
+              )}
+              <PromoCodeManager eventId={ev.id} promoCodes={promoCodes} tiers={allTiers} />
+              <ScannerManager eventId={ev.id} scanners={scanners} />
+              <CompManager eventId={ev.id} tiers={allTiers} comps={comps} />
+              <RefundManager eventId={ev.id} refunds={refunds} />
+              <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl ?? null} galleryUrls={ev.galleryUrls} />
+            </>
           )}
-          <PromoCodeManager eventId={ev.id} promoCodes={promoCodes} tiers={allTiers} />
-          <ScannerManager eventId={ev.id} scanners={scanners} />
-          <CompManager eventId={ev.id} tiers={allTiers} comps={comps} />
-          <RefundManager eventId={ev.id} refunds={refunds} />
-          <EventImageManager eventId={ev.id} coverImageUrl={ev.coverImageUrl ?? null} galleryUrls={ev.galleryUrls} />
         </CardContent>
       </Card>
     </div>

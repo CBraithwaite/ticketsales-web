@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { authedFetch } from '@/lib/server-fetch';
 import OrganizerVerificationQueue from '@/components/admin/OrganizerVerificationQueue';
+import AdminEventList from '@/components/admin/AdminEventList';
+import type { AdminEventItem } from '@/types/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, AlertCircle, Inbox } from 'lucide-react';
@@ -48,6 +50,8 @@ export default async function AdminPage() {
   }
 
   const pending = (await pendingRes.json()) as AdminOrganizer[];
+  const eventsRes = await authedFetch('/api/v1/admin/events');
+  const events = eventsRes.ok ? ((await eventsRes.json()) as AdminEventItem[]) : null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -80,6 +84,18 @@ export default async function AdminPage() {
           </Card>
         ) : (
           <OrganizerVerificationQueue organizers={pending} />
+        )}
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-lg font-semibold">Events</h2>
+        <p className="text-sm text-muted-foreground">
+          Cancelling an event refunds every buyer in full, fees included.
+        </p>
+        {events ? (
+          <AdminEventList events={events} />
+        ) : (
+          <p className="mt-4 text-sm text-destructive">Failed to load events (status {eventsRes.status}).</p>
         )}
       </section>
     </div>

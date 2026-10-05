@@ -58,6 +58,8 @@ export type EventDetail = Omit<
   type: EventType;
   tiers: TierResponse[];
   occurrences: OccurrenceResponse[] | null;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
 };
 
 /** Which payment methods the server has configured (GET /checkout/payment-methods). */
@@ -163,6 +165,19 @@ export interface AdminPayoutItem {
   status: string;
   scheduledAt: string;
   bankRef: string | null;
+}
+
+export interface AdminEventItem {
+  id: string;
+  slug: string;
+  name: string;
+  organizerName: string;
+  status: EventStatus;
+  country: string;
+  startsAt: string;
+  endsAt: string;
+  ticketsSold: number;
+  cancelledAt: string | null;
 }
 
 export interface AdminBankTransferOrderItem {

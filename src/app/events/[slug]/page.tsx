@@ -6,7 +6,7 @@ import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Shirt, ArrowLeft } from 'lucide-react';
+import { Calendar, MapPin, Shirt, ArrowLeft, Ban } from 'lucide-react';
 import CheckoutPanel from '@/components/checkout/CheckoutPanel';
 import { fmtRange, DEFAULT_LOCALE } from '@/lib/datetime';
 
@@ -44,7 +44,7 @@ export async function generateMetadata(props: Props) {
   const ev = await fetchEvent(params.slug).catch(() => null);
   if (!ev) return { title: 'Event not found · Choice Stubs' };
   return {
-    title: `${ev.name} · Choice Stubs`,
+    title: `${ev.status === 'Cancelled' ? 'Cancelled: ' : ''}${ev.name} · Choice Stubs`,
     description: ev.description.slice(0, 160),
   };
 }
@@ -160,7 +160,30 @@ export default async function EventDetailPage(props: Props) {
 
           {/* Right: Checkout panel */}
           <div className="lg:col-span-2">
-            <CheckoutPanel event={ev} methods={methods} />
+            {ev.status === 'Cancelled' ? (
+              <Card className="border-red-200 bg-red-50">
+                <CardContent className="p-6 text-red-900">
+                  <div className="flex items-center gap-2">
+                    <Ban className="h-5 w-5" />
+                    <h2 className="text-lg font-semibold">This event has been cancelled</h2>
+                  </div>
+                  {ev.cancellationReason && (
+                    <p className="mt-3 text-sm">
+                      <span className="font-medium">From {ev.organizer.businessName}:</span> {ev.cancellationReason}
+                    </p>
+                  )}
+                  <p className="mt-3 text-sm text-red-800">
+                    Ticket holders get a full refund, fees included. Card payments go back to the card automatically
+                    and usually arrive within 5–10 business days. Check your email for details about your order.
+                  </p>
+                  <Button asChild variant="outline" className="mt-5 bg-white">
+                    <Link href="/">Find another event</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <CheckoutPanel event={ev} methods={methods} />
+            )}
           </div>
         </div>
       </div>
