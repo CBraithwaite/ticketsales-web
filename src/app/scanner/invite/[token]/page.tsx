@@ -13,6 +13,7 @@ import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 interface InviteInfo {
   name: string;
   email: string;
+  hasAccount: boolean;
   gate: string | null;
   eventName: string;
   eventDate: string;
@@ -48,11 +49,11 @@ export default function AcceptInvitePage(props: { params: Promise<{ token: strin
     start(async () => {
       setError(null);
 
-      if (password.length < 10) {
+      if (!info?.hasAccount && password.length < 10) {
         setError('Password must be at least 10 characters.');
         return;
       }
-      if (password !== confirmPassword) {
+      if (!info?.hasAccount && password !== confirmPassword) {
         setError('Passwords do not match.');
         return;
       }
@@ -175,7 +176,9 @@ export default function AcceptInvitePage(props: { params: Promise<{ token: strin
 
           <div className="space-y-3">
             <p className="text-sm text-neutral-600">
-              Create a password to set up your scanner account:
+              {info.hasAccount
+                ? 'You already have a Choice Stubs account. Enter its password to accept:'
+                : 'Create a password to set up your scanner account:'}
             </p>
             <div>
               <Label className="mb-1">Password</Label>
@@ -183,18 +186,22 @@ export default function AcceptInvitePage(props: { params: Promise<{ token: strin
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 10 characters"
+                placeholder={info.hasAccount ? 'Your current password' : 'At least 10 characters'}
+                autoComplete={info.hasAccount ? 'current-password' : 'new-password'}
               />
             </div>
-            <div>
-              <Label className="mb-1">Confirm password</Label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your password"
-              />
-            </div>
+            {!info.hasAccount && (
+              <div>
+                <Label className="mb-1">Confirm password</Label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                />
+              </div>
+            )}
           </div>
 
           {error && (
@@ -209,7 +216,11 @@ export default function AcceptInvitePage(props: { params: Promise<{ token: strin
             onClick={accept}
             disabled={pending || !password}
           >
-            {pending ? 'Setting up…' : 'Accept invite & create account'}
+            {pending
+              ? 'Setting up…'
+              : info.hasAccount
+                ? 'Accept invite'
+                : 'Accept invite & create account'}
           </Button>
         </CardContent>
       </Card>
