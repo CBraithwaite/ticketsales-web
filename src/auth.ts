@@ -69,6 +69,21 @@ const ApiTokenResponseSchema = z.object({
 
 type ApiTokenResponse = z.infer<typeof ApiTokenResponseSchema>;
 
+/**
+ * Login is called from this server, so the API would otherwise see Vercel's IP for
+ * every visitor and rate-limit them all as one. Pass the visitor's IP (Vercel sets
+ * x-real-ip / x-forwarded-for and strips client-supplied values) with the shared
+ * secret the API requires before it trusts the header.
+ */
+function clientIpHeaders(request: Request): Record<string, string> {
+  const secret = process.env.API_PROXY_SECRET;
+  const ip =
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  if (!secret || !ip) return {};
+  return { 'X-Proxy-Secret': secret, 'X-Client-IP': ip };
+}
+
 async function refreshAccessToken(refreshToken: string): Promise<ApiTokenResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
@@ -98,7 +113,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(creds) {
+      async authorize(creds, request) {
         const parsed = z
           .object({ email: z.string().email(), password: z.string().min(1) })
           .safeParse(creds);
@@ -106,7 +121,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...clientIpHeaders(request) },
           body: JSON.stringify(parsed.data),
           cache: 'no-store',
         });

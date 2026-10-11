@@ -85,5 +85,6 @@ frontend/
 | `NEXT_PUBLIC_API_BASE_URL`| Browser   | Public API URL — must be reachable from end-users  |
 | `API_INTERNAL_BASE_URL`   | Server    | Used inside Server Components; can be private URL  |
 | `AUTH_SECRET`             | Server    | Session signing key (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`)    |
+| `API_PROXY_SECRET`        | Server    | Same value as the API's `RateLimiting__ProxySecret`; lets login rate limits see the visitor's IP |
 | `AUTH_URL`                | Server    | Canonical site URL                                 |
 | `AUTH_TRUST_HOST`         | Server    | `true` in dev / behind trusted proxies             |
