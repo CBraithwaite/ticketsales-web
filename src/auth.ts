@@ -128,7 +128,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger }) {
       // First sign-in: copy from the credentials response onto the JWT.
       if (user && (user as { tokens?: ApiTokenResponse }).tokens) {
         const t = (user as { tokens: ApiTokenResponse }).tokens;
@@ -143,12 +143,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      // Manual session.update() can patch the JWT.
-      if (trigger === 'update' && session) return { ...token, ...session };
+      // session.update() forces a refresh so roles are re-read from the API. Data sent
+      // with update() is deliberately ignored: it comes from the browser, and roles in
+      // this token gate server-side checks (e.g. /api/upload).
+      const forceRefresh = trigger === 'update';
 
       // Subsequent requests: refresh if the access token is within 30s of expiry.
       const now = Date.now();
-      if (token.accessTokenExpiresAt && now < token.accessTokenExpiresAt - 30_000) {
+      if (!forceRefresh && token.accessTokenExpiresAt && now < token.accessTokenExpiresAt - 30_000) {
         return token;
       }
 
