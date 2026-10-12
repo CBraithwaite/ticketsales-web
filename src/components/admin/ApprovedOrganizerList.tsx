@@ -194,7 +194,7 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
                       <Textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder="Reason (required — recorded in the admin audit log)"
+                        placeholder="Reason (required — shown to the organizer)"
                         rows={2}
                         className="resize-none text-sm"
                       />

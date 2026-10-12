@@ -218,7 +218,7 @@ export default function OrganizerVerificationQueue({ organizers: initial }: Prop
                       onChange={(e) => setReason(e.target.value)}
                       placeholder={
                         actionType === 'reject'
-                          ? 'Reason for rejection (required)'
+                          ? 'Reason for rejection (required — shown to the organizer)'
                           : 'Optional note for the organizer'
                       }
                       rows={2}

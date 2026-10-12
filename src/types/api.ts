@@ -26,6 +26,8 @@ export type VerificationStatus = 'Pending' | 'UnderReview' | 'Approved' | 'Rejec
 
 export type OrganizerResponse = Omit<Schemas['OrganizerResponse'], 'verificationStatus'> & {
   verificationStatus: VerificationStatus;
+  /** The admin's note on the latest verification decision — the reason when rejected. */
+  verificationNotes?: string | null;
 };
 
 export type TierResponse = Omit<Schemas['TierResponse'], 'currency'> & {

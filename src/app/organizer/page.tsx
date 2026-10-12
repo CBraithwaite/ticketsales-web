@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   Plus, ExternalLink, Settings, CalendarDays, Ticket, TrendingUp, AlertCircle, Wallet,
-  Banknote, ScanLine, Clock, Users, ReceiptText,
+  Banknote, ScanLine, Clock, Users, ReceiptText, ShieldOff,
 } from 'lucide-react';
 
 export const metadata = { title: 'Organizer dashboard · Choice Stubs' };
@@ -155,6 +155,31 @@ export default async function OrganizerDashboard() {
           </div>
         )}
       </header>
+
+      {/* Rejected / suspended: explain why and what it means */}
+      {(organizer.verificationStatus === 'Rejected' || organizer.verificationStatus === 'Suspended') && (
+        <Card className="mt-8 border-red-200 bg-red-50">
+          <CardContent className="p-5 text-red-900">
+            <div className="flex items-center gap-2">
+              <ShieldOff className="h-5 w-5 shrink-0" />
+              <h2 className="text-base font-semibold">Your organizer account isn&apos;t approved</h2>
+            </div>
+            {organizer.verificationNotes && (
+              <p className="mt-3 text-sm">
+                <span className="font-medium">Reason from Choice Stubs:</span> {organizer.verificationNotes}
+              </p>
+            )}
+            <p className="mt-3 text-sm text-red-800">
+              While your account isn&apos;t approved you can&apos;t create or edit events or request payouts, and
+              ticket sales on your events are paused. People who already bought tickets are unaffected — you can
+              still handle refund requests, cancel an event and manage your scanners.
+            </p>
+            <Button asChild variant="outline" size="sm" className="mt-4 bg-white">
+              <Link href="/contact">Contact support</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Needs attention */}
       {needsAttention && (
