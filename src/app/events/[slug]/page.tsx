@@ -6,7 +6,7 @@ import { CATEGORY_LABELS, COUNTRY_LABELS } from '@/types/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Shirt, ArrowLeft, Ban } from 'lucide-react';
+import { Calendar, MapPin, Shirt, ArrowLeft, Ban, CirclePause } from 'lucide-react';
 import CheckoutPanel from '@/components/checkout/CheckoutPanel';
 import { fmtRange, DEFAULT_LOCALE } from '@/lib/datetime';
 
@@ -175,6 +175,22 @@ export default async function EventDetailPage(props: Props) {
                   <p className="mt-3 text-sm text-red-800">
                     Ticket holders get a full refund, fees included. Card payments go back to the card automatically
                     and usually arrive within 5–10 business days. Check your email for details about your order.
+                  </p>
+                  <Button asChild variant="outline" className="mt-5 bg-white">
+                    <Link href="/">Find another event</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : ev.salesPaused ? (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-6 text-amber-900">
+                  <div className="flex items-center gap-2">
+                    <CirclePause className="h-5 w-5" />
+                    <h2 className="text-lg font-semibold">Ticket sales are paused</h2>
+                  </div>
+                  <p className="mt-3 text-sm text-amber-800">
+                    Tickets for this event aren&apos;t available right now. If you already have tickets, they&apos;re
+                    still valid — check your email or your account for them.
                   </p>
                   <Button asChild variant="outline" className="mt-5 bg-white">
                     <Link href="/">Find another event</Link>

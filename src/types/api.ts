@@ -60,6 +60,8 @@ export type EventDetail = Omit<
   occurrences: OccurrenceResponse[] | null;
   cancelledAt?: string | null;
   cancellationReason?: string | null;
+  /** True when the organizer is no longer approved: the event stays visible but checkout is refused. */
+  salesPaused?: boolean;
 };
 
 /** Which payment methods the server has configured (GET /checkout/payment-methods). */
