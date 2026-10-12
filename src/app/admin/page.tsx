@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { authedFetch } from '@/lib/server-fetch';
 import OrganizerVerificationQueue from '@/components/admin/OrganizerVerificationQueue';
-import ApprovedOrganizerList from '@/components/admin/ApprovedOrganizerList';
+import OrganizerActionList from '@/components/admin/OrganizerActionList';
 import AdminEventList from '@/components/admin/AdminEventList';
 import type { AdminEventItem } from '@/types/api';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,8 @@ interface AdminOrganizer {
   taxRegistrationNumber: string | null;
   verificationStatus: string;
   createdAt: string;
+  verificationNotes?: string | null;
+  verifiedAt?: string | null;
 }
 
 export default async function AdminPage() {
@@ -53,6 +55,8 @@ export default async function AdminPage() {
   const pending = (await pendingRes.json()) as AdminOrganizer[];
   const approvedRes = await authedFetch('/api/v1/admin/organizers?status=Approved');
   const approved = approvedRes.ok ? ((await approvedRes.json()) as AdminOrganizer[]) : null;
+  const rejectedRes = await authedFetch('/api/v1/admin/organizers?status=Rejected');
+  const rejected = rejectedRes.ok ? ((await rejectedRes.json()) as AdminOrganizer[]) : null;
   const eventsRes = await authedFetch('/api/v1/admin/events');
   const events = eventsRes.ok ? ((await eventsRes.json()) as AdminEventItem[]) : null;
 
@@ -96,10 +100,22 @@ export default async function AdminPage() {
           Revoking approval pauses ticket sales on the organizer&apos;s events and blocks payouts.
         </p>
         {approved ? (
-          // Keyed on the ids so an approval in the queue above shows up here after router.refresh().
-          <ApprovedOrganizerList key={approved.map((o) => o.id).join()} organizers={approved} />
+          // Keyed on the ids so a decision elsewhere on the page shows up here after router.refresh().
+          <OrganizerActionList key={approved.map((o) => o.id).join()} organizers={approved} mode="revoke" />
         ) : (
           <p className="mt-4 text-sm text-destructive">Failed to load organizers (status {approvedRes.status}).</p>
+        )}
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-lg font-semibold">Rejected Organizers</h2>
+        <p className="text-sm text-muted-foreground">
+          Reinstating restores organizer access and resumes ticket sales on their events.
+        </p>
+        {rejected ? (
+          <OrganizerActionList key={rejected.map((o) => o.id).join()} organizers={rejected} mode="reinstate" />
+        ) : (
+          <p className="mt-4 text-sm text-destructive">Failed to load organizers (status {rejectedRes.status}).</p>
         )}
       </section>
 

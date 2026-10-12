@@ -219,7 +219,7 @@ export default function OrganizerVerificationQueue({ organizers: initial }: Prop
                       placeholder={
                         actionType === 'reject'
                           ? 'Reason for rejection (required — shown to the organizer)'
-                          : 'Optional note for the organizer'
+                          : 'Optional note (saved with the decision)'
                       }
                       rows={2}
                       className="resize-none text-sm"

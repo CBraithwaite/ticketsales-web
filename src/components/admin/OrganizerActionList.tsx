@@ -9,7 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, XCircle, Loader2, Building2, Mail, Phone, ShieldOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Building2, Mail, Phone, ShieldOff, ShieldCheck } from 'lucide-react';
+import { DEFAULT_TIMEZONE, DEFAULT_LOCALE } from '@/lib/datetime';
 
 interface AdminOrganizer {
   id: string;
@@ -17,25 +18,85 @@ interface AdminOrganizer {
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  verificationNotes?: string | null;
+  verifiedAt?: string | null;
 }
+
+type Mode = 'revoke' | 'reinstate';
 
 interface Props {
   organizers: AdminOrganizer[];
+  /**
+   * revoke    — approved organizers; rejecting removes the Organizer role, pauses ticket
+   *             sales on their events and blocks payouts (ticket holders stay covered).
+   * reinstate — rejected organizers; approving restores the role and resumes sales.
+   */
+  mode: Mode;
 }
 
 /** Rows rendered at once — search narrows the rest. */
 const MAX_SHOWN = 20;
 
-/**
- * Approved organizers, each with "Revoke approval" — rejecting an approved organizer
- * removes their Organizer role, pauses ticket sales on their events and blocks payouts,
- * while existing ticket holders stay covered (refunds, cancellation, scanning).
- */
-export default function ApprovedOrganizerList({ organizers: initial }: Props) {
+const COPY: Record<Mode, {
+  endpoint: 'reject' | 'approve';
+  button: string;
+  confirm: string;
+  question: (name: string) => string;
+  consequences: string[];
+  placeholder: string;
+  reasonRequired: boolean;
+  success: (name: string) => string;
+  empty: string;
+  searchLabel: string;
+}> = {
+  revoke: {
+    endpoint: 'reject',
+    button: 'Revoke approval',
+    confirm: 'Confirm revoke',
+    question: (name) => `Revoke ${name}'s approval?`,
+    consequences: [
+      'Ticket sales on all their events are paused. The events stay visible.',
+      "They can't edit or publish events, create promo codes or comps, or request payouts.",
+      'Existing tickets stay valid. They can still refund, cancel events and manage scanners.',
+      'You can reinstate them later to restore everything.',
+    ],
+    placeholder: 'Reason (required — shown to the organizer)',
+    reasonRequired: true,
+    success: (name) => `${name}'s approval has been revoked. Ticket sales on their events are paused.`,
+    empty: 'No approved organizers.',
+    searchLabel: 'Search approved organizers',
+  },
+  reinstate: {
+    endpoint: 'approve',
+    button: 'Reinstate',
+    confirm: 'Confirm reinstate',
+    question: (name) => `Reinstate ${name}?`,
+    consequences: [
+      'They get organizer access back: creating and editing events, promo codes, comps and payouts.',
+      'Ticket sales resume on any of their published events.',
+    ],
+    placeholder: 'Optional note (saved with the decision)',
+    reasonRequired: false,
+    success: (name) => `${name} has been reinstated. Ticket sales on their events have resumed.`,
+    empty: 'No rejected organizers.',
+    searchLabel: 'Search rejected organizers',
+  },
+};
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIMEZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+export default function OrganizerActionList({ organizers: initial, mode }: Props) {
+  const copy = COPY[mode];
   const router = useRouter();
   const { data: session } = useSession();
   const [organizers, setOrganizers] = useState(initial);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [actingId, setActingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,19 +111,19 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
   const shown = matches.slice(0, MAX_SHOWN);
 
   const open = (id: string) => {
-    setRevokingId(id);
+    setActingId(id);
     setReason('');
     setError(null);
   };
 
   const cancel = () => {
-    setRevokingId(null);
+    setActingId(null);
     setError(null);
   };
 
   const submit = async () => {
-    if (!revokingId) return;
-    if (!reason.trim()) {
+    if (!actingId) return;
+    if (copy.reasonRequired && !reason.trim()) {
       setError('A reason is required when revoking approval.');
       return;
     }
@@ -76,10 +137,10 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/v1/admin/organizers/${revokingId}/reject`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/admin/organizers/${actingId}/${copy.endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reason: reason.trim() }),
+        body: JSON.stringify({ reason: reason.trim() || null }),
       });
 
       if (!res.ok) {
@@ -95,10 +156,10 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
         return;
       }
 
-      const name = organizers.find((o) => o.id === revokingId)?.businessName ?? 'Organizer';
-      setOrganizers((prev) => prev.filter((o) => o.id !== revokingId));
+      const name = organizers.find((o) => o.id === actingId)?.businessName ?? 'Organizer';
+      setOrganizers((prev) => prev.filter((o) => o.id !== actingId));
       cancel();
-      setSuccessMsg(`${name}'s approval has been revoked. Ticket sales on their events are paused.`);
+      setSuccessMsg(copy.success(name));
       setTimeout(() => setSuccessMsg(null), 6000);
       router.refresh();
     } catch (err) {
@@ -111,6 +172,17 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
       setLoading(false);
     }
   };
+
+  const ActionIcon = mode === 'revoke' ? ShieldOff : ShieldCheck;
+  const actionButtonClass = mode === 'revoke'
+    ? 'border-destructive/40 text-destructive hover:bg-destructive/10'
+    : 'border-green-600/40 text-green-700 hover:bg-green-50';
+  const panelClass = mode === 'revoke'
+    ? 'border-destructive/30 bg-destructive/5'
+    : 'border-green-200 bg-green-50/60';
+  const confirmClass = mode === 'revoke'
+    ? 'bg-destructive text-white hover:bg-destructive/90'
+    : 'bg-green-600 text-white hover:bg-green-700';
 
   return (
     <div className="mt-3 space-y-3">
@@ -128,7 +200,7 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by business, contact name or email"
-            aria-label="Search approved organizers"
+            aria-label={copy.searchLabel}
           />
           <p className="text-xs text-muted-foreground">
             {matches.length > MAX_SHOWN
@@ -139,9 +211,9 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
       )}
 
       {organizers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No approved organizers.</p>
+        <p className="text-sm text-muted-foreground">{copy.empty}</p>
       ) : shown.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No approved organizers match “{query.trim()}”.</p>
+        <p className="text-sm text-muted-foreground">No organizers match “{query.trim()}”.</p>
       ) : (
         <ul className="space-y-3">
           {shown.map((o) => (
@@ -164,37 +236,43 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
                         {o.contactPhone}
                       </span>
                     </div>
+                    {mode === 'reinstate' && (o.verificationNotes || o.verifiedAt) && (
+                      <p className="text-sm">
+                        <span className="font-medium">
+                          Rejected{o.verifiedAt ? ` ${fmtDate(o.verifiedAt)}` : ''}
+                          {o.verificationNotes ? ':' : ''}
+                        </span>{' '}
+                        {o.verificationNotes}
+                      </p>
+                    )}
                   </div>
 
-                  {revokingId !== o.id && (
+                  {actingId !== o.id && (
                     <Button
                       size="sm"
                       variant="outline"
-                      className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                      className={`shrink-0 ${actionButtonClass}`}
                       onClick={() => open(o.id)}
                     >
-                      <ShieldOff className="mr-1 h-3.5 w-3.5" />
-                      Revoke approval
+                      <ActionIcon className="mr-1 h-3.5 w-3.5" />
+                      {copy.button}
                     </Button>
                   )}
                 </div>
 
-                {revokingId === o.id && (
+                {actingId === o.id && (
                   <>
                     <Separator className="my-4" />
-                    <div className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                      <p className="text-sm font-medium">Revoke {o.businessName}&apos;s approval?</p>
+                    <div className={`space-y-3 rounded-lg border p-4 ${panelClass}`}>
+                      <p className="text-sm font-medium">{copy.question(o.businessName)}</p>
                       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                        <li>Ticket sales on all their events are paused. The events stay visible.</li>
-                        <li>They can&apos;t edit or publish events, create promo codes or comps, or request payouts.</li>
-                        <li>Existing tickets stay valid. They can still refund, cancel events and manage scanners.</li>
-                        <li>You can approve them again later to restore everything.</li>
+                        {copy.consequences.map((c) => <li key={c}>{c}</li>)}
                       </ul>
 
                       <Textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder="Reason (required — shown to the organizer)"
+                        placeholder={copy.placeholder}
                         rows={2}
                         className="resize-none text-sm"
                       />
@@ -207,16 +285,11 @@ export default function ApprovedOrganizerList({ organizers: initial }: Props) {
                       )}
 
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={submit}
-                          disabled={loading}
-                          className="bg-destructive text-white hover:bg-destructive/90"
-                        >
+                        <Button size="sm" onClick={submit} disabled={loading} className={confirmClass}>
                           {loading ? (
                             <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Processing…</>
                           ) : (
-                            'Confirm revoke'
+                            copy.confirm
                           )}
                         </Button>
                         <Button size="sm" variant="outline" onClick={cancel} disabled={loading}>
